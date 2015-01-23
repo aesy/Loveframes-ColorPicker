@@ -7,7 +7,7 @@ Option 1. Place ``colorPicker.lua`` inside your LoveFrames objects directory.
 Option 2. Place ``colorPicker.lua`` anywhere and require it after LoveFrames.
 
 ## Usage
-Call ``colorPicker()`` within your code. It takes 2 arguments, initial color (rgb table) to display and a callback function.
+Call ``colorPicker()`` within your code. It takes 2 arguments, initial color (rgb table) and a callback function.
 
 ## Example usage
 
