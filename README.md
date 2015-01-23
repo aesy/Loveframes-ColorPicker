@@ -3,6 +3,7 @@ A color picker for [Love Frames](https://github.com/NikolaiResokav/LoveFrames) -
 
 ## Installation
 Option 1. Place ``colorPicker.lua`` inside your LoveFrames objects directory.
+
 Option 2. Place ``colorPicker.lua`` anywhere and require it after LoveFrames.
 
 ## Usage
