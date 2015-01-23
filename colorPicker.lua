@@ -145,10 +145,10 @@ function colorPicker(color, callback)
 		local color = love.image.newImageData(sizeX, sizeY)
 		color:mapPixel(function(x, y)
 			if math.floor(math.sqrt(math.pow(x-hue*sizeX, 2) + math.pow(y-(1-value)*sizeY, 2)) + .5) == sizeCursor then
-				if saturation + value >= .5 then
-					return 255, 255, 255, 255
-				else
+				if saturation - value < 0 then
 					return 0, 0, 0, 255
+				else
+					return 255, 255, 255, 255
 				end
 			end
 			return _hsv2rgb(x/sizeX, saturation, 1 - y/sizeY, 1)
