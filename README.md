@@ -9,8 +9,8 @@ Option 2. Place ``colorPicker.lua`` anywhere and require it after LoveFrames.
 ## Usage
 Call ``colorPicker()`` within your code. It takes 6 arguments:
 
-1. (optional) initial color, in the form of a {r, g, b} table. Default: ``{255, 0, 0}``.
-2. (optional) a callback function. A {r, g, b} table is passed to it. Default: ``function(c) print(unpack(c)) end``.
+1. (optional) Initial color, in the form of a {r, g, b} table. Default: ``{255, 0, 0}``.
+2. (optional) A callback function. A {r, g, b} table is passed to it. Default: ``function(c) print(unpack(c)) end``.
 3. (optional) Make Top, boolean. Default: ``true``.
 4. (optional) Modal, boolean. Default: ``true``.
 5. (optional) Screen Locked, boolean. Default: ``true``.
@@ -22,7 +22,7 @@ Call ``colorPicker()`` within your code. It takes 6 arguments:
 	button:SetWidth(200)
 	button:SetText("Color Picker")
 	button.OnClick = function(object, x, y)
-		colorPicker({255, 0, 0}, function(color) print(unpack(color)) end)
+		colorPicker({255, 0, 0}, function(color) doStuff(color) end)
 	end
 
 ## Screenshot
