@@ -18,7 +18,7 @@ Call ``colorPicker()`` within your code. It takes 6 arguments:
 
 ## Example usage
 
-	local function doStuff(color)
+	function doStuff(color)
 		-- stuff
 	end
 
