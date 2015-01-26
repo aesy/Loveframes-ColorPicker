@@ -101,16 +101,18 @@ function colorPicker(color, callback)
 
 		if rgb_min < rgb_max then
 			if rgb_max == r then
-				h =       (g - b)/(r - rgb_min)*60
+				h = (g-b)/(r-rgb_min)*60
 			elseif rgb_max == g then
-				h = 120 + (b - r)/(g - rgb_min)*60
+				h = 120+(b-r)/(g-rgb_min)*60
 			else
-				h = 240 + (r - g)/(b - rgb_min)*60
+				h = 240+(r-g)/(b-rgb_min)*60
 			end
 
-			if h < 0 then h = h + 360 end
+			if h < 0 then
+				h = h+360
+			end
 
-			return h/360, 1 - rgb_min/rgb_max, rgb_max/255
+			return h/360, 1-rgb_min/rgb_max, rgb_max/255
 		else
 			return 0, 0, rgb_max/255
 		end
@@ -135,52 +137,55 @@ function colorPicker(color, callback)
 		return _dec2hex(r) .. _dec2hex(g) .. _dec2hex(b)
 	end
 
-
 	---------------------------------------------------------
 	-- Update functions
 	---------------------------------------------------------
-	local function _setColorSpace(object, hue, saturation, value, sizeCursor, sizeX, sizeY)
-		sizeX = sizeX or object:GetWidth()
-		sizeY = sizeY or  object:GetHeight()
-		local color = love.image.newImageData(sizeX, sizeY)
-		color:mapPixel(function(x, y)
-			if math.floor(math.sqrt(math.pow(x-hue*sizeX, 2) + math.pow(y-(1-value)*sizeY, 2)) + .5) == sizeCursor then
-				if saturation - value < 0 then
-					return 0, 0, 0, 255
-				else
-					return 255, 255, 255, 255
-				end
-			end
-			return _hsv2rgb(x/sizeX, saturation, 1 - y/sizeY, 1)
-		end)
+	local function _updateImage(object, val1, val2, val3, func, cursorSize, width, height)
+		width = width or object:GetWidth()
+		height = height or  object:GetHeight()
+		local color = love.image.newImageData(width, height)
+		color:mapPixel(function(x, y) return func(x, y, val1, val2, val3, cursorSize, width, height) end)
 		object:SetImage(love.graphics.newImage(color))
 	end
 
-	local function _setSlider(object, saturation, sizeCursor, sizeX, sizeY)
-		sizeX = sizeX or object:GetWidth()
-		sizeY = sizeY or  object:GetHeight()
-		local color = love.image.newImageData(sizeX, sizeY)
-		color:mapPixel(function(x, y)
-			if y > math.floor(saturation*sizeY+.5)-sizeCursor/2 and y < math.floor(saturation*sizeY+.5)+sizeCursor/2 then
-				if saturation >= .5 then
-					return 255, 255, 255, 255
-				else
-					return 0, 0, 0, 255
-				end
+	local function _hsvcolorspace(x, y, hue, saturation, value, cursorSize, width, height)
+		if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-saturation)*height, 2)) + .5) == cursorSize then
+			if saturation > .7 then
+				return 0, 0, 0, 255
+			else
+				return 255, 255, 255, 255
 			end
-			return (1-y/sizeY)*255, (1-y/sizeY)*255, (1-y/sizeY)*255, 255
-		end)
-		object:SetImage(love.graphics.newImage(color))
+		end
+		return _hsv2rgb(x/width, value, 1 - y/height)
 	end
 
-	local function _setColor(object, r, g, b, sizeX, sizeY)
-		sizeX = sizeX or object:GetWidth()
-		sizeY = sizeY or  object:GetHeight()
-		local color = love.image.newImageData(sizeX, sizeY)
-		color:mapPixel(function(x, y)
-			return r, g, b, 255
-		end)
-		object:SetImage(love.graphics.newImage(color))
+	local function _hsvcolorslider(x, y, hue, saturation, value, cursorSize, width, height)
+		if y >= math.floor((1-value)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-value)*(height-1)+.5) + cursorSize/2 then
+			if saturation > .5 then
+				return 0, 0, 0, 255
+			else
+				return 255, 255, 255, 255
+			end
+		end
+		return _hsv2rgb(hue, 1 - y/height, _clamp(saturation, 0.3, 1))
+	end
+
+	local function _rgbcolor(x, y, r, g, b, cursorSize, width, height)
+		return r, g, b, 255
+	end
+
+	local function _relief(x, y, val1, val2, val3, reliefSize, width, height)
+		if x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
+			return 0, 0, 0, 0
+		elseif x < y and x < height-y then
+			return 50, 50, 50, 255		-- left
+		elseif width-x < y and width-x < height-y then
+			return 255, 255, 255, 255	-- right
+		elseif y < height/2 then
+			return 50, 50, 50, 255		-- up
+		else
+			return 255, 255, 255, 255	-- down
+		end
 	end
 
 	local function _getColor()
@@ -192,9 +197,9 @@ function colorPicker(color, callback)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		_setSlider(bwSlider, saturation, 1)
-		_setColorSpace(colorspace, hue, saturation, value, 6)
-		_setColor(color_current, r, g, b)
+		_updateImage(colorspace, hue, value, saturation, _hsvcolorspace, 6)
+		_updateImage(bwSlider, hue, value, saturation, _hsvcolorslider, 1)
+		_updateImage(color_current, r, g, b, _rgbcolor)
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
 		if input_green ~= ignore then input_green:SetText(math.floor(g + .5)) end
@@ -226,16 +231,13 @@ function colorPicker(color, callback)
 	-- Create HSV color space
 	---------------------------------------------------------
 	colorspace = loveframes.Create("image", frame)
-	_setColorSpace(colorspace, hue, saturation, value, 6, 200, 200)
+	_updateImage(colorspace, hue, value, saturation, _hsvcolorspace, 6, 200, 200)
 	colorspace:SetPos(13, 37)
 
 	colorspace.Update = function(object, dt)
 		if object.dragging then
 			hue = _clamp((love.mouse.getX() - object:GetX()) / object:GetWidth(), 0, 1)
 			value = 1 - _clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
-			_setColorSpace(object, hue, saturation, value, 6)
-			local r, g, b = _hsv2rgb(hue, saturation, value)
-			_setColor(color_current, r, g, b)
 			_update()
 		end
 	end
@@ -257,16 +259,12 @@ function colorPicker(color, callback)
 	-- Create satutation slider
 	---------------------------------------------------------
 	bwSlider = loveframes.Create("image", frame)
-	_setSlider(bwSlider, saturation, 1, 22, 200)
+	_updateImage(bwSlider, hue, value, saturation, _hsvcolorslider, 1, 22, 200)
 	bwSlider:SetPos(225, 37)
 
 	bwSlider.Update = function(object, dt)
 		if object.dragging then
-			saturation = _clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
-			_setSlider(object, saturation, 1)
-			_setColorSpace(colorspace, hue, saturation, value, 6)
-			local r, g, b = _hsv2rgb(hue, saturation, value)
-			_setColor(color_current, r, g, b)
+			saturation = 1 - _clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
 			_update()
 		end
 	end
@@ -295,9 +293,6 @@ function colorPicker(color, callback)
 	input_blue = loveframes.Create("textinput", frame)
 	input_HEX = loveframes.Create("textinput", frame)
 
-	---------------------------------------------------------
-	-- Text inputs
-	---------------------------------------------------------
 	input_hue:SetPos(335, 86)
 	input_hue:SetSize(35, 22)
 	input_hue:SetLimit(3)
@@ -432,10 +427,10 @@ function colorPicker(color, callback)
 	color_current = loveframes.Create("image", frame)
 
 	color_old:SetPos(260, 37)
-	_setColor(color_old, r, g, b, 20, 35)
+	_updateImage(color_old, r, g, b, _rgbcolor, nil, 20, 35)
 
 	color_current:SetPos(280, 37)
-	_setColor(color_current, r, g, b, 35, 35)
+	_updateImage(color_current, r, g, b, _rgbcolor, nil, 35, 35)
 
 	---------------------------------------------------------
 	-- Ok button, callback
