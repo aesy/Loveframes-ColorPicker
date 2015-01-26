@@ -18,4 +18,5 @@ Call ``colorPicker()`` within your code. It takes 2 arguments, initial color (rg
 		colorPicker({255, 0, 0}, function(color) print(unpack(color)) end)
 	end
 
-![Screenshot](/screenshot.png?raw=true "Default LoveFrames Theme")
+## Screenshot
+![Screenshot](Screenshot.png)
