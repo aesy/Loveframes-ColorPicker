@@ -1,15 +1,15 @@
 --[[---------------------------------------------------------
-	- colorPicker(color, callback)
+	- colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
 	-
-	- @param (optional) table color. Default: {255, 0, 0}.
+	- @param (optional) table initial rgb color. Default: {255, 0, 0}.
 	- @param (optional) function callback. Default: function(c) print(unpack(c)) end.
-	- @param (optional) maketop. Default: true.
-	- @param (optional) modal. Default: true.
-	- @param (optional) screenlocked. Default: true.
-	- @param (optional) loveframesVar. Default: loveframes.
-	- @return None
+	- @param (optional) boolean makeTop. Default: true.
+	- @param (optional) boolean modal. Default: true.
+	- @param (optional) boolean screenLocked. Default: true.
+	- @param (optional) module loveframesVar. Default: loveframes.
+	- @return nil
 --]]---------------------------------------------------------
-function colorPicker(color, callback, maketop, modal, screenlocked, loveframesVar)
+function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
 	local loveframes = loveframes or loveframesVar
 	if not loveframes then error("LoveFrames module is nil") end
 
@@ -229,9 +229,9 @@ function colorPicker(color, callback, maketop, modal, screenlocked, loveframesVa
 	frame:SetName("Color Picker")
 	frame:SetSize(400, 250)
 	frame:Center()
-	frame:MakeTop(maketop or true)
+	frame:MakeTop(makeTop or true)
 	frame:SetModal(modal or true)
-	frame:SetScreenLocked(screenlocked or true)
+	frame:SetScreenLocked(screenLocked or true)
 	frame:SetDraggable(true)
 
 	---------------------------------------------------------
