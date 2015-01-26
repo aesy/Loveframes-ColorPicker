@@ -18,11 +18,15 @@ Call ``colorPicker()`` within your code. It takes 6 arguments:
 
 ## Example usage
 
+	local function doStuff(color)
+		-- stuff
+	end
+
 	local button = loveframes.Create("button", frame)
 	button:SetWidth(200)
 	button:SetText("Color Picker")
 	button.OnClick = function(object, x, y)
-		colorPicker({255, 0, 0}, function(color) doStuff(color) end)
+		colorPicker({255, 0, 0}, doStuff)
 	end
 
 ## Screenshot

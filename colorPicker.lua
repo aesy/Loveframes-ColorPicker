@@ -229,9 +229,9 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	frame:SetName("Color Picker")
 	frame:SetSize(400, 250)
 	frame:Center()
-	frame:MakeTop(makeTop or true)
-	frame:SetModal(modal or true)
-	frame:SetScreenLocked(screenLocked or true)
+	frame:MakeTop(if makeTop ~= nil then makeTop or true)
+	frame:SetModal(if modal ~= nil then modal or true)
+	frame:SetScreenLocked(if screenLocked ~= nil then screenLocked or true)
 	frame:SetDraggable(true)
 
 	---------------------------------------------------------
