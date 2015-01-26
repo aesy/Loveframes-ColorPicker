@@ -1,11 +1,18 @@
 --[[---------------------------------------------------------
 	- colorPicker(color, callback)
 	-
-	- @param (optional) table color
-	- @param (optional) function callback
+	- @param (optional) table color. Default: {255, 0, 0}.
+	- @param (optional) function callback. Default: function(c) print(unpack(c)) end.
+	- @param (optional) maketop. Default: true.
+	- @param (optional) modal. Default: true.
+	- @param (optional) screenlocked. Default: true.
+	- @param (optional) loveframesVar. Default: loveframes.
 	- @return None
 --]]---------------------------------------------------------
-function colorPicker(color, callback)
+function colorPicker(color, callback, maketop, modal, screenlocked, loveframesVar)
+	local loveframes = loveframes or loveframesVar
+	if not loveframes then error("LoveFrames module is nil") end
+
 	---------------------------------------------------------
 	-- Presets
 	---------------------------------------------------------
@@ -149,25 +156,25 @@ function colorPicker(color, callback)
 	end
 
 	local function _hsvcolorspace(x, y, hue, saturation, value, cursorSize, width, height)
-		if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-saturation)*height, 2)) + .5) == cursorSize then
-			if saturation > .7 then
+		if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-value)*height, 2)) + .5) == cursorSize then
+			if value > .7 then
 				return 0, 0, 0, 255
 			else
 				return 255, 255, 255, 255
 			end
 		end
-		return _hsv2rgb(x/width, value, 1 - y/height)
+		return _hsv2rgb(x/width, saturation, 1 - y/height)
 	end
 
 	local function _hsvcolorslider(x, y, hue, saturation, value, cursorSize, width, height)
-		if y >= math.floor((1-value)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-value)*(height-1)+.5) + cursorSize/2 then
-			if saturation > .7 then
+		if y >= math.floor((1-saturation)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-saturation)*(height-1)+.5) + cursorSize/2 then
+			if value > .7 then
 				return 0, 0, 0, 255
 			else
 				return 255, 255, 255, 255
 			end
 		end
-		return _hsv2rgb(hue, 1 - y/height, _clamp(saturation, 0.4, 1))
+		return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
 	end
 
 	local function _rgbcolor(x, y, r, g, b, cursorSize, width, height)
@@ -197,8 +204,8 @@ function colorPicker(color, callback)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		_updateImage(colorspace, hue, value, saturation, _hsvcolorspace, 6)
-		_updateImage(bwSlider, hue, value, saturation, _hsvcolorslider, 1)
+		_updateImage(colorspace, hue, saturation, value, _hsvcolorspace, 6)
+		_updateImage(bwSlider, hue, saturation, value, _hsvcolorslider, 1)
 		_updateImage(color_current, r, g, b, _rgbcolor)
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
@@ -222,9 +229,9 @@ function colorPicker(color, callback)
 	frame:SetName("Color Picker")
 	frame:SetSize(400, 250)
 	frame:Center()
-	frame:MakeTop(true)
-	frame:SetModal(true)
-	frame:SetScreenLocked(true)
+	frame:MakeTop(maketop or true)
+	frame:SetModal(modal or true)
+	frame:SetScreenLocked(screenlocked or true)
 	frame:SetDraggable(true)
 
 	---------------------------------------------------------
@@ -248,7 +255,7 @@ function colorPicker(color, callback)
 	-- Create HSV color space
 	---------------------------------------------------------
 	colorspace = loveframes.Create("image", frame)
-	_updateImage(colorspace, hue, value, saturation, _hsvcolorspace, 6, 200, 200)
+	_updateImage(colorspace, hue, saturation, value, _hsvcolorspace, 6, 200, 200)
 	colorspace:SetPos(13, 37)
 
 	colorspace.Update = function(object, dt)
@@ -276,7 +283,7 @@ function colorPicker(color, callback)
 	-- Create satutation slider
 	---------------------------------------------------------
 	bwSlider = loveframes.Create("image", frame)
-	_updateImage(bwSlider, hue, value, saturation, _hsvcolorslider, 1, 22, 200)
+	_updateImage(bwSlider, hue, saturation, value, _hsvcolorslider, 1, 22, 200)
 	bwSlider:SetPos(225, 37)
 
 	bwSlider.Update = function(object, dt)
@@ -458,9 +465,8 @@ function colorPicker(color, callback)
 	button_ok:SetText("Ok")
 	button_ok.OnClick = function(object)
 		frame:Remove()
-		if callback then
-			callback(_getColor())
-		end
+		local callback = callback or function(c) print(unpack(c)) end
+		callback(_getColor())
 	end
 
 	---------------------------------------------------------
