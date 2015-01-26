@@ -161,13 +161,13 @@ function colorPicker(color, callback)
 
 	local function _hsvcolorslider(x, y, hue, saturation, value, cursorSize, width, height)
 		if y >= math.floor((1-value)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-value)*(height-1)+.5) + cursorSize/2 then
-			if saturation > .5 then
+			if saturation > .7 then
 				return 0, 0, 0, 255
 			else
 				return 255, 255, 255, 255
 			end
 		end
-		return _hsv2rgb(hue, 1 - y/height, _clamp(saturation, 0.3, 1))
+		return _hsv2rgb(hue, 1 - y/height, _clamp(saturation, 0.4, 1))
 	end
 
 	local function _rgbcolor(x, y, r, g, b, cursorSize, width, height)
@@ -175,15 +175,15 @@ function colorPicker(color, callback)
 	end
 
 	local function _relief(x, y, val1, val2, val3, reliefSize, width, height)
-		if x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
+		if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
 			return 0, 0, 0, 0
-		elseif x < y and x < height-y then
-			return 50, 50, 50, 255		-- left
-		elseif width-x < y and width-x < height-y then
+		elseif x < width/2 and x < y and x < height-y then
+			return 100, 100, 100, 255	-- left
+		elseif x >= width/2 and width-x <= y and width-x <= height-y then
 			return 255, 255, 255, 255	-- right
 		elseif y < height/2 then
-			return 50, 50, 50, 255		-- up
-		else
+			return 100, 100, 100, 255	-- up
+		elseif y >= height/2 then
 			return 255, 255, 255, 255	-- down
 		end
 	end
@@ -226,6 +226,23 @@ function colorPicker(color, callback)
 	frame:SetModal(true)
 	frame:SetScreenLocked(true)
 	frame:SetDraggable(true)
+
+	---------------------------------------------------------
+	-- Sunken relief
+	---------------------------------------------------------
+	local padding = 2
+
+	local relief = loveframes.Create("image", frame)
+	_updateImage(relief, nil, nil, nil, _relief, padding, 200+padding*2, 200+padding*2)
+	relief:SetPos(13-padding, 37-padding)
+
+	local relief = loveframes.Create("image", frame)
+	_updateImage(relief, nil, nil, nil, _relief, padding, 22+padding*2, 200+padding*2)
+	relief:SetPos(225-padding, 37-padding)
+
+	local relief = loveframes.Create("image", frame)
+	_updateImage(relief, nil, nil, nil, _relief, padding, 55+padding*2, 35+padding*2)
+	relief:SetPos(260-padding, 37-padding)
 
 	---------------------------------------------------------
 	-- Create HSV color space
@@ -465,5 +482,4 @@ function colorPicker(color, callback)
 	-- Starting values
 	---------------------------------------------------------
 	_update()
-
 end
