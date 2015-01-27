@@ -18,14 +18,14 @@ Call ``colorPicker()`` within your code. It takes 6 arguments:
 
 Returns ``nil``.
 
-![Screenshot](colorPicker.png)
-
 ## Example usage of colorPicker
 	function doStuff(color)
 		-- stuff
 	end
 
 	colorPicker({255, 0, 0}, doStuff)
+
+![Screenshot](colorPicker.png)
 
 
 ## Usage of colorButton
@@ -41,12 +41,12 @@ Call ``colorButton()`` within your code. It takes 7 arguments:
 
 Returns a modified LoveFrames button. All original methods will still work on it, plus two new: ``GetColor()`` & ``SetColor()``.
 
-![Screenshot](colorButton.gif)
-
 ## Example usage of colorButton
 	local button = colorButton(nil, {0, 255, 0}, nil, 25, 25, 4)
 	button:SetPos(100, 100)
 	button:GetColor() -- returns {0, 255, 0}
+
+![Screenshot](colorButton.gif)
 
 
 ## Issues
