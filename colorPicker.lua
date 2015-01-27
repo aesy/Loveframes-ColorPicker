@@ -11,7 +11,7 @@
 --]]---------------------------------------------------------
 function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
 	local loveframes = loveframes or loveframesVar
-	if not loveframes then error("LoveFrames module is nil") end
+	assert(loveframes, "LoveFrames module is nil")
 
 	---------------------------------------------------------
 	-- Presets
@@ -147,15 +147,15 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	---------------------------------------------------------
 	-- Update functions
 	---------------------------------------------------------
-	local function _updateImage(object, val1, val2, val3, func, cursorSize, width, height)
+	local function _updateImage(object, func, cursorSize, width, height)
 		width = width or object:GetWidth()
 		height = height or  object:GetHeight()
 		local color = love.image.newImageData(width, height)
-		color:mapPixel(function(x, y) return func(x, y, val1, val2, val3, cursorSize, width, height) end)
+		color:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
 		object:SetImage(love.graphics.newImage(color))
 	end
 
-	local function _hsvcolorspace(x, y, hue, saturation, value, cursorSize, width, height)
+	local function _hsvcolorspace(x, y, cursorSize, width, height)
 		if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-value)*height, 2)) + .5) == cursorSize then
 			if value > .7 then
 				return 0, 0, 0, 255
@@ -166,7 +166,7 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 		return _hsv2rgb(x/width, saturation, 1 - y/height)
 	end
 
-	local function _hsvcolorslider(x, y, hue, saturation, value, cursorSize, width, height)
+	local function _hsvcolorslider(x, y, cursorSize, width, height)
 		if y >= math.floor((1-saturation)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-saturation)*(height-1)+.5) + cursorSize/2 then
 			if value > .7 then
 				return 0, 0, 0, 255
@@ -177,11 +177,12 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 		return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
 	end
 
-	local function _rgbcolor(x, y, r, g, b, cursorSize, width, height)
+	local function _rgbcolor(x, y, cursorSize, width, height)
+		local r, g, b = _hsv2rgb(hue, saturation, value)
 		return r, g, b, 255
 	end
 
-	local function _relief(x, y, val1, val2, val3, reliefSize, width, height)
+	local function _relief(x, y, reliefSize, width, height)
 		if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
 			return 0, 0, 0, 0
 		elseif x < width/2 and x < y and x < height-y then
@@ -204,9 +205,9 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		_updateImage(colorspace, hue, saturation, value, _hsvcolorspace, 6)
-		_updateImage(bwSlider, hue, saturation, value, _hsvcolorslider, 1)
-		_updateImage(color_current, r, g, b, _rgbcolor)
+		_updateImage(colorspace, _hsvcolorspace, 6)
+		_updateImage(bwSlider, _hsvcolorslider, 1)
+		_updateImage(color_current, _rgbcolor)
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
 		if input_green ~= ignore then input_green:SetText(math.floor(g + .5)) end
@@ -229,9 +230,9 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	frame:SetName("Color Picker")
 	frame:SetSize(400, 250)
 	frame:Center()
-	frame:MakeTop(if makeTop ~= nil then makeTop or true)
-	frame:SetModal(if modal ~= nil then modal or true)
-	frame:SetScreenLocked(if screenLocked ~= nil then screenLocked or true)
+	frame:MakeTop(makeTop ~= nil and makeTop or true)
+	frame:SetModal(modal ~= nil and modal or true)
+	frame:SetScreenLocked(screenLocked ~= nil and screenLocked or true)
 	frame:SetDraggable(true)
 
 	---------------------------------------------------------
@@ -240,22 +241,22 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	local padding = 2
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief, nil, nil, nil, _relief, padding, 200+padding*2, 200+padding*2)
+	_updateImage(relief,  _relief, padding, 200+padding*2, 200+padding*2)
 	relief:SetPos(13-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief, nil, nil, nil, _relief, padding, 22+padding*2, 200+padding*2)
+	_updateImage(relief, _relief, padding, 22+padding*2, 200+padding*2)
 	relief:SetPos(225-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief, nil, nil, nil, _relief, padding, 55+padding*2, 35+padding*2)
+	_updateImage(relief, _relief, padding, 55+padding*2, 35+padding*2)
 	relief:SetPos(260-padding, 37-padding)
 
 	---------------------------------------------------------
 	-- Create HSV color space
 	---------------------------------------------------------
 	colorspace = loveframes.Create("image", frame)
-	_updateImage(colorspace, hue, saturation, value, _hsvcolorspace, 6, 200, 200)
+	_updateImage(colorspace, _hsvcolorspace, 6, 200, 200)
 	colorspace:SetPos(13, 37)
 
 	colorspace.Update = function(object, dt)
@@ -283,7 +284,7 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	-- Create satutation slider
 	---------------------------------------------------------
 	bwSlider = loveframes.Create("image", frame)
-	_updateImage(bwSlider, hue, saturation, value, _hsvcolorslider, 1, 22, 200)
+	_updateImage(bwSlider, _hsvcolorslider, 1, 22, 200)
 	bwSlider:SetPos(225, 37)
 
 	bwSlider.Update = function(object, dt)
@@ -417,8 +418,7 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	input_HEX.OnTextChanged = function(object)
 		local text = object:GetText()
 		if text ~= "" and text:len() == 6 then
-			local r, g, b = _hex2rgb(text)
-			hue, saturation, value = _rgb2hsv(r, g, b)
+			hue, saturation, value = _rgb2hsv(_hex2rgb(text))
 			_update(object)
 		end
 	end
@@ -451,10 +451,10 @@ function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVa
 	color_current = loveframes.Create("image", frame)
 
 	color_old:SetPos(260, 37)
-	_updateImage(color_old, r, g, b, _rgbcolor, nil, 20, 35)
+	_updateImage(color_old, _rgbcolor, nil, 20, 35)
 
 	color_current:SetPos(280, 37)
-	_updateImage(color_current, r, g, b, _rgbcolor, nil, 35, 35)
+	_updateImage(color_current, _rgbcolor, nil, 35, 35)
 
 	---------------------------------------------------------
 	-- Ok button, callback
