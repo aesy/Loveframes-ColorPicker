@@ -1,3 +1,6 @@
+require("colorButton")
+-- require("gradientEditor")
+
 --[[---------------------------------------------------------
 	- colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
 	-
