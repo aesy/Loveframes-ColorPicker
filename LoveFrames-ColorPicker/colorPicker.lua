@@ -232,7 +232,7 @@ local _shader_bwSlider = [[
 	- @param 'shaders' (optional) boolean. Default: false.
 	- @param 'loveframes' (optional) module. Default: loveframes.
 	-
-	- @return nil
+	- @returns nil
 --]]---------------------------------------------------------
 function colorPicker(options)
 	local options = options or {}

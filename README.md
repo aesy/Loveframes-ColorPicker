@@ -16,7 +16,7 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 * @param ``modal`` (optional) boolean. Default: ``true``.
 * @param ``screenLocked`` (optional) boolean. Default: ``true``.
 * @param ``loveframes`` (optional) module. Default: ``loveframes``.
-* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only works with LÖVE past version 0.9.0. Yields a big speed boost. Only reason it's off by default is because it's still tweaked.``*
+* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only work with LÖVE past version 0.9.0. Yields a speed boost. Only reason it's off by default is because it's still tweaked.``*
 * @returns nil
 
 ## Example usage of colorPicker
@@ -25,7 +25,7 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 	end
 
 	colorPicker({
-		color = {10, 20, 30},
+		color = {255, 0, 0},
 		callback = doStuff,
 		shaders = true
 	})
@@ -37,14 +37,14 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 Call ``colorButton()`` within your code. It takes a table of parameters:
 
 * @param ``parent`` (optional) loveframes object. Default: ``nil``.
-* @param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
-* @param ``callback`` (optional) function. Default: ``nil``.
 * @param ``width`` (optional) integer. Default: ``25``.
 * @param ``height`` (optional) integer. Default: ``25``.
 * @param ``padding`` (optional) integer. Default: ``3``.
-* @param ``loveframes`` (optional) module. Default: ``loveframes``.
-* @param ``shaders`` (optional) boolean. Default: ``false``.
 * @returns a modified instance of loveframes button
+
+Any parameter of ``colorPicker()`` is also accepted.
+
+The returned object has all methods of a loveframes button, plus two more: ``GetColor()``, and ``SetColor({r, g, b})``.
 
 ## Example usage of colorButton
 	local button = colorButton({

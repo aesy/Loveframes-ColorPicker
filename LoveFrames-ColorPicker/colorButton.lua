@@ -1,16 +1,27 @@
+local function tableCopy(orig)
+	local orig_type = type(orig)
+	local copy
+	if orig_type == 'table' then
+		copy = {}
+		for orig_key, orig_value in pairs(orig) do
+			copy[orig_key] = orig_value
+		end
+	else
+		copy = orig
+	end
+	return copy
+end
+
 --[[---------------------------------------------------------
 	- colorButton({})
 	-
 	- @param 'parent' (optional) loveframes object. Default: nil.
-	- @param 'color' (optional) rgb table. Default: {255, 0, 0}.
-	- @param 'callback' (optional) function. Default: nil.
 	- @param 'width' (optional) integer. Default: 25.
 	- @param 'height' (optional) integer. Default: 25.
 	- @param 'padding' (optional) integer. Default: 3.
-	- @param 'shaders' (optional) boolean. Default: false.
-	- @param 'loveframes' (optional) module. Default: loveframes.
+	- @param any parameter of colorPicker({}).
 	-
-	- @return modified instance of loveframes button
+	- @returns modified instance of loveframes button
 --]]---------------------------------------------------------
 function colorButton(options)
 	local options = options or {}
@@ -62,12 +73,11 @@ function colorButton(options)
 				options.callback(c)
 			end
 		end
-		colorPicker({
-			color = object.color,
-			callback = func,
-			shaders = shaders,
-			loveframes = loveframes
-		})
+
+		local parameters = tableCopy(options)
+		parameters.callback = func
+		parameters.color = object.color
+		colorPicker(parameters)
 	end
 
 	button.color = options.color or {255, 0, 0}
