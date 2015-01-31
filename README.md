@@ -21,10 +21,10 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 
 Shaders are about ``350%`` faster than its' counterpart when values are changed. It's about the same when idle. Numbers from my setup:
 
-| ``Avg FPS`` | shaders false | shader true |
-| ----------- |:-------------:|------------:|
-| idle        |           464 |         467 |
-| used        |           125 |         445 |
+| ``Avg FPS`` | shaders false | shaders true |
+| ----------- |:-------------:|-------------:|
+| idle        |           464 |          467 |
+| used        |           125 |          445 |
 
 
 ## Example usage of colorPicker
