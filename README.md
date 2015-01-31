@@ -34,8 +34,7 @@ Performance difference between shaders/imagedata on my setup:
 
 	colorPicker({
 		color = {255, 0, 0},
-		callback = doStuff,
-		shaders = true
+		callback = doStuff
 	})
 
 ![Screenshot](colorPicker.png)
@@ -57,8 +56,7 @@ The returned object has all methods of a loveframes button, plus two more: ``Get
 ## Example usage of colorButton
 	local button = colorButton({
 			color = {0, 255, 0},
-			padding = 4,
-			shaders = true
+			padding = 4
 		})
 	button:SetPos(100, 100)
 	button:GetColor() -- returns {0, 255, 0}
