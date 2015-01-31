@@ -16,8 +16,16 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 * @param ``modal`` (optional) boolean. Default: ``true``.
 * @param ``screenLocked`` (optional) boolean. Default: ``true``.
 * @param ``loveframes`` (optional) module. Default: ``loveframes``.
-* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only work with LÖVE past version 0.9.0. Yields a speed boost. Only reason it's off by default is because it's still tweaked.``*
+* @param ``shaders`` (optional) boolean. Default: ``true``. *``Only work with LÖVE past version 0.9.0.``*
 * @returns nil
+
+Shaders are about ``350%`` faster than its' counterpart when values are changed. It's about the same when idle. Numbers from my setup:
+
+| ``Avg FPS`` | shaders false | shader true |
+| ----------- |:-------------:|------------:|
+| idle        |           464 |         467 |
+| used        |           125 |         445 |
+
 
 ## Example usage of colorPicker
 	function doStuff(color)

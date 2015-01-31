@@ -197,7 +197,6 @@ local _shader_colorspace = [[
 
 	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
 		if (floor(sqrt(pow(abs(texture_coords.x-hue)*200, 2) + pow(abs(texture_coords.y-(1-value))*200, 2)) + 1) == 6) {
-
 			if (value > 0.7) { return vec4(0, 0, 0, 255); }
 			else { return vec4(255, 255, 255, 255); }
 		}
@@ -251,16 +250,16 @@ function colorPicker(options)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		if options.shaders then
+		if options.shaders == false then
+			_updateImage(colorspace, _hsvcolorspace, 6)
+			_updateImage(bwSlider, _hsvcolorslider, 1)
+		else
 			shader_colorspace:send("hue", hue)
 			shader_colorspace:send("saturation", saturation)
 			shader_colorspace:send("value", value)
 			shader_bwSlider:send("hue", hue)
 			shader_bwSlider:send("saturation", saturation)
 			shader_bwSlider:send("value", value)
-		else
-			_updateImage(colorspace, _hsvcolorspace, 6)
-			_updateImage(bwSlider, _hsvcolorslider, 1)
 		end
 
 		_updateImage(color_current, _rgbcolor) -- add a shader version?
@@ -366,7 +365,7 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Use shaders
 	---------------------------------------------------------
-	if options.shaders then
+	if options.shaders ~= false then
 		shader_colorspace = love.graphics.newShader(_shader_hsv2rgb .. _shader_colorspace)
 		shader_bwSlider = love.graphics.newShader(_shader_hsv2rgb .. _shader_bwSlider)
 
@@ -522,15 +521,13 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Show start color and current pick
 	---------------------------------------------------------
-	local r, g, b = _hsv2rgb(hue, saturation, value)
 	local color_old = loveframes.Create("image", frame)
-	color_current = loveframes.Create("image", frame)
-
 	color_old:SetPos(260, 37)
 	_updateImage(color_old, _rgbcolor, nil, 20, 35)
 
+	color_current = loveframes.Create("image", frame)
 	color_current:SetPos(280, 37)
-	_updateImage(color_current, _rgbcolor, nil, 35, 35)
+	color_current:SetSize(35, 35)
 
 	---------------------------------------------------------
 	-- Ok button, callback
