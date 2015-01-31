@@ -1,247 +1,204 @@
----------------------------------------------------------
--- Color presets
----------------------------------------------------------
-local color_presets = {
-	["Black"]        	 = {   0,   0,   0 },
-	["Dark Grey"]   	 = {  47,  47,  47 },
-	["Grey"]        	 = { 128, 128, 128 },
-	["Light grey"]   	 = { 230, 230, 230 },
-	["White"]         	 = { 255, 255, 255 },
-	["Water"]     	     = { 135, 206, 250 },
-	["Ice"]       	     = { 210, 238, 254 },
-	["Cream"]       	 = { 255, 235, 205 },
-	["Beige"]         	 = { 232, 230, 197 },
-	["Apple Green"] 	 = { 164, 198,  57 },
-	["Light green"]   	 = { 200, 232, 197 },
-	["Light blue"]    	 = { 197, 232, 229 },
-	["Baby blue"] 		 = { 226, 244, 248 },
-	["Red"]           	 = { 255,   0,   0 },
-	["Rose Red"]    	 = { 255,   3,  62 },
-}
-
----------------------------------------------------------
--- Color conversion functions
----------------------------------------------------------
-local function _hsv2rgb(h, s, v)
-	h = (h*6)%6
-	local i = math.floor(h)
-	local p = 255*v
-	local q = p*(1-s)
-
-	if i == 0 then
-		return p, q + p*s*(h-i), q
-	elseif i == 1 then
-		return p*(1-s*(h-i)), p, q
-	elseif i == 2 then
-		return q, p, q+p*s*(h-i)
-	elseif i == 3 then
-		return q, p*(1-s*(h-i)), p
-	elseif i == 4 then
-		return q+p*s*(h-i), q, p
-	elseif i == 5 then
-		return p, q, p*(1-s*(h-i))
-	end
-end
-
-local function _rgb2hsv(r, g, b)
-	local h
-	local rgb_max = math.max(r,g,b)
-	local rgb_min = math.min(r,g,b)
-
-	if rgb_min < rgb_max then
-		if rgb_max == r then
-			h = (g-b)/(r-rgb_min)*60
-		elseif rgb_max == g then
-			h = 120+(b-r)/(g-rgb_min)*60
-		else
-			h = 240+(r-g)/(b-rgb_min)*60
-		end
-
-		if h < 0 then
-			h = h+360
-		end
-
-		return h/360, 1-rgb_min/rgb_max, rgb_max/255
-	else
-		return 0, 0, rgb_max/255
-	end
-end
-
-local function _hex2rgb(hex)
-	return  tonumber("0x" .. hex:sub(1,2)), tonumber("0x" .. hex:sub(3,4)), tonumber("0x" .. hex:sub(5,6))
-end
-
-local function _rgb2hex(r, g, b)
-	local function _dec2hex(dec)
-		local b, k, out, i, d = 16, "0123456789ABCDEF", "", 0
-		while dec > 0 do
-			i = i + 1
-			dec, d = math.floor(dec / b), math.fmod(dec, b) + 1
-			out = string.sub(k, d, d) .. out
-		end
-		while out:len() < 2 do out = "0" .. out end
-		return out
-	end
-
-	return _dec2hex(r) .. _dec2hex(g) .. _dec2hex(b)
-end
-
----------------------------------------------------------
--- Utility functions
----------------------------------------------------------
-local function _clamp(val, lower, upper)
-	if lower > upper then
-		lower, upper = upper, lower
-	end
-
-	return math.max(lower, math.min(upper, val))
-end
-
-local function _genOrderedIndex(tbl)
-	local orderedIndex = {}
-	for key in pairs(tbl) do
-		table.insert(orderedIndex, key)
-	end
-	table.sort(orderedIndex)
-	return orderedIndex
-end
-
-local function _orderedNext(tbl, state)
-	if state == nil then
-		tbl.__orderedIndex = _genOrderedIndex(tbl)
-		key = tbl.__orderedIndex[1]
-		return key, tbl[key]
-	end
-	key = nil
-	for i = 1,table.getn(tbl.__orderedIndex) do
-		if tbl.__orderedIndex[i] == state then
-			key = tbl.__orderedIndex[i+1]
-		end
-	end
-	if key then
-		return key, tbl[key]
-	end
-	tbl.__orderedIndex = nil
-	return
-end
-
-local function _orderedPairs(tbl)
-	return _orderedNext, tbl, nil
-end
-
----------------------------------------------------------
--- Image functions
----------------------------------------------------------
-local function _updateImage(object, func, cursorSize, width, height)
-	width = width or object:GetWidth()
-	height = height or  object:GetHeight()
-	local color = love.image.newImageData(width, height)
-	color:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
-	object:SetImage(love.graphics.newImage(color))
-end
-
-local function _hsvcolorspace(x, y, cursorSize, width, height)
-	if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-value)*height, 2)) + .5) == cursorSize then
-		if value > .7 then
-			return 0, 0, 0, 255
-		else
-			return 255, 255, 255, 255
-		end
-	end
-	return _hsv2rgb(x/width, saturation, 1 - y/height)
-end
-
-local function _hsvcolorslider(x, y, cursorSize, width, height)
-	if y >= math.floor((1-saturation)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-saturation)*(height-1)+.5) + cursorSize/2 then
-		if value > .7 then
-			return 0, 0, 0, 255
-		else
-			return 255, 255, 255, 255
-		end
-	end
-	return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
-end
-
-local function _rgbcolor(x, y, cursorSize, width, height)
-	local r, g, b = _hsv2rgb(hue, saturation, value)
-	return r, g, b, 255
-end
-
-local function _relief(x, y, reliefSize, width, height)
-	if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
-		return 0, 0, 0, 0			-- center
-	elseif x < width/2 and x < y and x < height-y then
-		return 100, 100, 100, 255	-- left
-	elseif x >= width/2 and width-x <= y and width-x <= height-y then
-		return 255, 255, 255, 255	-- right
-	elseif y < height/2 then
-		return 100, 100, 100, 255	-- up
-	elseif y >= height/2 then
-		return 255, 255, 255, 255	-- down
-	end
-end
-
----------------------------------------------------------
--- Shaders
----------------------------------------------------------
-local _shader_hsv2rgb = [[
-	vec3 hsv2rgb(float h, float s, float v) {
-		return mix(vec3(1.),clamp((abs(fract(h+vec3(3.,2.,1.)/3.)*6.-3.)-1.),0.,1.),s)*v;
-	}
-]]
-
-local _shader_colorspace = [[
-	extern float hue;
-	extern float saturation;
-	extern float value;
-
-	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		if (floor(sqrt(pow(abs(texture_coords.x-hue)*200, 2) + pow(abs(texture_coords.y-(1-value))*200, 2)) + 1) == 6) {
-
-			if (value > 0.7) { return vec4(0, 0, 0, 255); }
-			else { return vec4(255, 255, 255, 255); }
-		}
-
-		return vec4(hsv2rgb(texture_coords.x, saturation, 1 - texture_coords.y), 1.0);
-	}
-]]
-
-local _shader_bwSlider = [[
-	extern float hue;
-	extern float saturation;
-	extern float value;
-
-	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		if (1 - texture_coords.y - 0.0026 <= saturation && 1 - texture_coords.y + 0.0026 >= saturation) {
-			if (value > 0.7) { return vec4(0, 0, 0, 255); }
-			else { return vec4(255, 255, 255, 255); }
-		}
-
-		return vec4(hsv2rgb(hue, 1 - texture_coords.y, clamp(value, 0.4, 1.)), 1.0);
-	}
-]]
+require("colorButton")
+-- require("gradientEditor")
 
 --[[---------------------------------------------------------
-	- colorPicker({})
+	- colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
 	-
-	- @param 'color' (optional) rgb table. Default: {255, 0, 0}.
-	- @param 'callback' (optional) function. Default: function(c) print(unpack(c)) end.
-	- @param 'makeTop' (optional) boolean. Default: true.
-	- @param 'modal' (optional) boolean. Default: true.
-	- @param 'screenLocked' (optional) boolean. Default: true.
-	- @param 'shaders' (optional) boolean. Default: false.
-	- @param 'loveframes' (optional) module. Default: loveframes.
-	-
+	- @param (optional) table initial rgb color. Default: {255, 0, 0}.
+	- @param (optional) function callback. Default: function(c) print(unpack(c)) end.
+	- @param (optional) boolean makeTop. Default: true.
+	- @param (optional) boolean modal. Default: true.
+	- @param (optional) boolean screenLocked. Default: true.
+	- @param (optional) module loveframesVar. Default: loveframes.
 	- @return nil
 --]]---------------------------------------------------------
-function colorPicker(options)
-	local options = options or {}
-	local loveframes = loveframes or options.loveframes
+function colorPicker(color, callback, makeTop, modal, screenLocked, loveframesVar)
+	local loveframes = loveframes or loveframesVar
 	assert(loveframes, "LoveFrames module is nil")
 
 	---------------------------------------------------------
-	-- local functions
+	-- Presets
 	---------------------------------------------------------
+	local color_presets = {
+		["Black"]        	 = {   0,   0,   0 },
+		["Dark Grey"]   	 = {  47,  47,  47 },
+		["Grey"]        	 = { 128, 128, 128 },
+		["Light grey"]   	 = { 230, 230, 230 },
+		["White"]         	 = { 255, 255, 255 },
+		["Water"]     	     = { 135, 206, 250 },
+		["Ice"]       	     = { 210, 238, 254 },
+		["Cream"]       	 = { 255, 235, 205 },
+		["Beige"]         	 = { 232, 230, 197 },
+		["Apple Green"] 	 = { 164, 198,  57 },
+		["Light green"]   	 = { 200, 232, 197 },
+		["Light blue"]    	 = { 197, 232, 229 },
+		["Baby blue"] 		 = { 226, 244, 248 },
+		["Red"]           	 = { 255,   0,   0 },
+		["Rose Red"]    	 = { 255,   3,  62 },
+	}
+
+	---------------------------------------------------------
+	-- Utility functions
+	---------------------------------------------------------
+	local function _clamp(val, lower, upper)
+		if lower > upper then
+			lower, upper = upper, lower
+		end
+
+		return math.max(lower, math.min(upper, val))
+	end
+
+	function _genOrderedIndex(tbl)
+		local orderedIndex = {}
+		for key in pairs(tbl) do
+			table.insert(orderedIndex, key)
+		end
+		table.sort(orderedIndex)
+		return orderedIndex
+	end
+
+	function _orderedNext(tbl, state)
+		if state == nil then
+			tbl.__orderedIndex = _genOrderedIndex(tbl)
+			key = tbl.__orderedIndex[1]
+			return key, tbl[key]
+		end
+		key = nil
+		for i = 1,table.getn(tbl.__orderedIndex) do
+			if tbl.__orderedIndex[i] == state then
+				key = tbl.__orderedIndex[i+1]
+			end
+		end
+		if key then
+			return key, tbl[key]
+		end
+		tbl.__orderedIndex = nil
+		return
+	end
+
+	function _orderedPairs(tbl)
+		return _orderedNext, tbl, nil
+	end
+
+	---------------------------------------------------------
+	-- Color conversion functions
+	---------------------------------------------------------
+	function _hsv2rgb(h, s, v)
+		h = (h*6)%6
+		local i = math.floor(h)
+		local p = 255*v
+		local q = p*(1-s)
+
+		if i == 0 then
+			return p, q + p*s*(h-i), q
+		elseif i == 1 then
+			return p*(1-s*(h-i)), p, q
+		elseif i == 2 then
+			return q, p, q+p*s*(h-i)
+		elseif i == 3 then
+			return q, p*(1-s*(h-i)), p
+		elseif i == 4 then
+			return q+p*s*(h-i), q, p
+		elseif i == 5 then
+			return p, q, p*(1-s*(h-i))
+		end
+	end
+
+	function _rgb2hsv(r, g, b)
+		local h
+		local rgb_max = math.max(r,g,b)
+		local rgb_min = math.min(r,g,b)
+
+		if rgb_min < rgb_max then
+			if rgb_max == r then
+				h = (g-b)/(r-rgb_min)*60
+			elseif rgb_max == g then
+				h = 120+(b-r)/(g-rgb_min)*60
+			else
+				h = 240+(r-g)/(b-rgb_min)*60
+			end
+
+			if h < 0 then
+				h = h+360
+			end
+
+			return h/360, 1-rgb_min/rgb_max, rgb_max/255
+		else
+			return 0, 0, rgb_max/255
+		end
+	end
+
+	local function _hex2rgb(hex)
+		return  tonumber("0x" .. hex:sub(1,2)), tonumber("0x" .. hex:sub(3,4)), tonumber("0x" .. hex:sub(5,6))
+	end
+
+	local function _rgb2hex(r, g, b)
+		local function _dec2hex(dec)
+			local b, k, out, i, d = 16, "0123456789ABCDEF", "", 0
+			while dec > 0 do
+				i = i + 1
+				dec, d = math.floor(dec / b), math.fmod(dec, b) + 1
+				out = string.sub(k, d, d) .. out
+			end
+			while out:len() < 2 do out = "0" .. out end
+			return out
+		end
+
+		return _dec2hex(r) .. _dec2hex(g) .. _dec2hex(b)
+	end
+
+	---------------------------------------------------------
+	-- Update functions
+	---------------------------------------------------------
+	local function _updateImage(object, func, cursorSize, width, height)
+		width = width or object:GetWidth()
+		height = height or  object:GetHeight()
+		local color = love.image.newImageData(width, height)
+		color:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
+		object:SetImage(love.graphics.newImage(color))
+	end
+
+	local function _hsvcolorspace(x, y, cursorSize, width, height)
+		if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-value)*height, 2)) + .5) == cursorSize then
+			if value > .7 then
+				return 0, 0, 0, 255
+			else
+				return 255, 255, 255, 255
+			end
+		end
+		return _hsv2rgb(x/width, saturation, 1 - y/height)
+	end
+
+	local function _hsvcolorslider(x, y, cursorSize, width, height)
+		if y >= math.floor((1-saturation)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-saturation)*(height-1)+.5) + cursorSize/2 then
+			if value > .7 then
+				return 0, 0, 0, 255
+			else
+				return 255, 255, 255, 255
+			end
+		end
+		return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
+	end
+
+	local function _rgbcolor(x, y, cursorSize, width, height)
+		local r, g, b = _hsv2rgb(hue, saturation, value)
+		return r, g, b, 255
+	end
+
+	local function _relief(x, y, reliefSize, width, height)
+		if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
+			return 0, 0, 0, 0
+		elseif x < width/2 and x < y and x < height-y then
+			return 100, 100, 100, 255	-- left
+		elseif x >= width/2 and width-x <= y and width-x <= height-y then
+			return 255, 255, 255, 255	-- right
+		elseif y < height/2 then
+			return 100, 100, 100, 255	-- up
+		elseif y >= height/2 then
+			return 255, 255, 255, 255	-- down
+		end
+	end
+
 	local function _getColor()
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		return { math.floor(r + .5), math.floor(g + .5), math.floor(b + .5) }
@@ -251,19 +208,9 @@ function colorPicker(options)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		if options.shaders then
-			shader_colorspace:send("hue", hue)
-			shader_colorspace:send("saturation", saturation)
-			shader_colorspace:send("value", value)
-			shader_bwSlider:send("hue", hue)
-			shader_bwSlider:send("saturation", saturation)
-			shader_bwSlider:send("value", value)
-		else
-			_updateImage(colorspace, _hsvcolorspace, 6)
-			_updateImage(bwSlider, _hsvcolorslider, 1)
-		end
-
-		_updateImage(color_current, _rgbcolor) -- add a shader version?
+		_updateImage(colorspace, _hsvcolorspace, 6)
+		_updateImage(bwSlider, _hsvcolorslider, 1)
+		_updateImage(color_current, _rgbcolor)
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
 		if input_green ~= ignore then input_green:SetText(math.floor(g + .5)) end
@@ -277,7 +224,7 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Local variables
 	---------------------------------------------------------
-	hue, saturation, value = _rgb2hsv(unpack(options.color or {255, 0, 0}))
+	hue, saturation, value = _rgb2hsv(unpack(color or {255, 0, 0}))
 
 	---------------------------------------------------------
 	-- Create window frame
@@ -286,9 +233,9 @@ function colorPicker(options)
 	frame:SetName("Color Picker")
 	frame:SetSize(400, 250)
 	frame:Center()
-	frame:MakeTop(options.makeTop ~= nil and options.makeTop or true)
-	frame:SetModal(options.modal ~= nil and options.modal or true)
-	frame:SetScreenLocked(options.screenLocked ~= nil and options.screenLocked or true)
+	frame:MakeTop(makeTop ~= nil and makeTop or true)
+	frame:SetModal(modal ~= nil and modal or true)
+	frame:SetScreenLocked(screenLocked ~= nil and screenLocked or true)
 	frame:SetDraggable(true)
 
 	---------------------------------------------------------
@@ -312,7 +259,7 @@ function colorPicker(options)
 	-- Create HSV color space
 	---------------------------------------------------------
 	colorspace = loveframes.Create("image", frame)
-	colorspace:SetImage(love.graphics.newImage(love.image.newImageData(200, 200)))
+	_updateImage(colorspace, _hsvcolorspace, 6, 200, 200)
 	colorspace:SetPos(13, 37)
 
 	colorspace.Update = function(object, dt)
@@ -340,7 +287,7 @@ function colorPicker(options)
 	-- Create satutation slider
 	---------------------------------------------------------
 	bwSlider = loveframes.Create("image", frame)
-	bwSlider:SetImage(love.graphics.newImage(love.image.newImageData(22, 200)))
+	_updateImage(bwSlider, _hsvcolorslider, 1, 22, 200)
 	bwSlider:SetPos(225, 37)
 
 	bwSlider.Update = function(object, dt)
@@ -360,26 +307,6 @@ function colorPicker(options)
 	bwSlider.mousereleased = function(object, x, y)
 		if object.dragging then
 			object.dragging = false
-		end
-	end
-
-	---------------------------------------------------------
-	-- Use shaders
-	---------------------------------------------------------
-	if options.shaders then
-		shader_colorspace = love.graphics.newShader(_shader_hsv2rgb .. _shader_colorspace)
-		shader_bwSlider = love.graphics.newShader(_shader_hsv2rgb .. _shader_bwSlider)
-
-		colorspace.Draw = function(object)
-			love.graphics.setShader(shader_colorspace)
-			love.graphics.draw(object.image, object:GetX(), object:GetY())
-			love.graphics.setShader()
-		end
-
-		bwSlider.Draw = function(object)
-			love.graphics.setShader(shader_bwSlider)
-			love.graphics.draw(object.image, object:GetX(), object:GetY())
-			love.graphics.setShader()
 		end
 	end
 
@@ -541,7 +468,7 @@ function colorPicker(options)
 	button_ok:SetText("Ok")
 	button_ok.OnClick = function(object)
 		frame:Remove()
-		local callback = options.callback or function(c) print(unpack(c)) end
+		local callback = callback or function(c) print(unpack(c)) end
 		callback(_getColor())
 	end
 

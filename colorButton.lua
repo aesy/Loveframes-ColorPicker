@@ -1,23 +1,8 @@
---[[---------------------------------------------------------
-	- colorButton({})
-	-
-	- @param 'parent' (optional) loveframes object. Default: nil.
-	- @param 'color' (optional) rgb table. Default: {255, 0, 0}.
-	- @param 'callback' (optional) function. Default: nil.
-	- @param 'width' (optional) integer. Default: 25.
-	- @param 'height' (optional) integer. Default: 25.
-	- @param 'padding' (optional) integer. Default: 3.
-	- @param 'shaders' (optional) boolean. Default: false.
-	- @param 'loveframes' (optional) module. Default: loveframes.
-	-
-	- @return modified instance of loveframes button
---]]---------------------------------------------------------
-function colorButton(options)
-	local options = options or {}
-	local loveframes = loveframes or options.loveframes
+function colorButton(parent, color, callback, width, height, padding, loveframesVar)
+	local loveframes = loveframes or loveframesVar
 	assert(loveframes, "LoveFrames module is nil")
 
-	local button = loveframes.Create("button", options.parent or parent)
+	local button = loveframes.Create("button", parent)
 
 	function button:SetColor(color)
 		self.color = color
@@ -58,21 +43,16 @@ function colorButton(options)
 	button.OnClick = function(object)
 		local function func(c)
 			object:SetColor(c)
-			if options.callback then
-				options.callback(c)
+			if callback then
+				callback(c)
 			end
 		end
-		colorPicker({
-			color = object.color,
-			callback = func,
-			shaders = shaders,
-			loveframes = loveframes
-		})
+		colorPicker(object.color, func, nil, nil, nil, loveframes)
 	end
 
-	button.color = options.color or {255, 0, 0}
-	button.padding = options.padding or 3
-	button:SetSize(options.width or 25, options.height or 25)
+	button.color = color or {255, 0, 0}
+	button.padding = padding or 3
+	button:SetSize(width or 80, height or 25)
 	button:SetText("")
 	button:SetColor(button.color)
 
