@@ -8,7 +8,7 @@ Place the ``LoveFrames-ColorPicker`` folder in your working directory, or in a s
 
 
 ## Usage of colorPicker
-Call ``colorPicker()`` within your code. It takes a table of arguments:
+Call ``colorPicker()`` within your code. It takes a table of parameters:
 
 * @param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
 * @param ``callback`` (optional) function. Default: ``function(c) print(unpack(c)) end``.
@@ -16,8 +16,8 @@ Call ``colorPicker()`` within your code. It takes a table of arguments:
 * @param ``modal`` (optional) boolean. Default: ``true``.
 * @param ``screenLocked`` (optional) boolean. Default: ``true``.
 * @param ``loveframes`` (optional) module. Default: ``loveframes``.
-* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only works with a LÖVE past version 0.9.0. Using it yields a big speed boost. Only reason it's off by default is because i'm still tweaking it.``*
-* @return nil
+* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only works with LÖVE past version 0.9.0. Yields a big speed boost. Only reason it's off by default is because it's still tweaked.``*
+* @returns nil
 
 ## Example usage of colorPicker
 	function doStuff(color)
@@ -34,7 +34,7 @@ Call ``colorPicker()`` within your code. It takes a table of arguments:
 
 
 ## Usage of colorButton
-Call ``colorButton()`` within your code. It takes a table of arguments:
+Call ``colorButton()`` within your code. It takes a table of parameters:
 
 * @param ``parent`` (optional) loveframes object. Default: ``nil``.
 * @param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
@@ -44,7 +44,7 @@ Call ``colorButton()`` within your code. It takes a table of arguments:
 * @param ``padding`` (optional) integer. Default: ``3``.
 * @param ``loveframes`` (optional) module. Default: ``loveframes``.
 * @param ``shaders`` (optional) boolean. Default: ``false``.
-* @return modified instance of loveframes button
+* @returns a modified instance of loveframes button
 
 ## Example usage of colorButton
 	local button = colorButton({
