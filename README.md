@@ -2,47 +2,59 @@
 A color picker for [Love Frames](https://github.com/NikolaiResokav/LoveFrames) - GUI library for [LÖVE](http://www.love2d.org).
 
 ## Installation
-Option 1. Place all *.lua-files inside your LoveFrames objects directory.
+Place the ``LoveFrames-ColorPicker`` folder in your working directory, or in a sub-folder, and require it.
 
-Option 2. Place all *.lua-files somewhere else and require ``colorPicker.lua`` after LoveFrames.
+	require("LoveFrames-ColorPicker")
+
 
 ## Usage of colorPicker
-Call ``colorPicker()`` within your code. It takes 6 arguments:
+Call ``colorPicker()`` within your code. It takes a table of arguments:
 
-1. (optional) Initial color, in the form of a {r, g, b} table. Default: ``{255, 0, 0}``.
-2. (optional) A callback function. A {r, g, b} table is passed to it. Default: ``function(c) print(unpack(c)) end``.
-3. (optional) Make Top, boolean. Default: ``true``.
-4. (optional) Modal, boolean. Default: ``true``.
-5. (optional) Screen Locked, boolean. Default: ``true``.
-6. (optional) The loveframes module itself. Default: ``loveframes``.
+@param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
+@param ``callback`` (optional) function. Default: ``function(c) print(unpack(c)) end``.
+@param ``makeTop`` (optional) boolean. Default: ``true``.
+@param ``modal`` (optional) boolean. Default: ``true``.
+@param ``screenLocked`` (optional) boolean. Default: ``true``.
+@param ``shaders`` (optional) boolean. Default: ``false``. Only works with a LÖVE past version 0.9.0. Using it yields a big speed boost. Only reason it's off by default is because i'm still tweaking it.
+@param ``loveframes`` (optional) module. Default: ``loveframes``.
 
-Returns ``nil``.
+@return nil
+
 
 ## Example usage of colorPicker
 	function doStuff(color)
 		-- stuff
 	end
 
-	colorPicker({255, 0, 0}, doStuff)
+	colorPicker({
+		color = {10, 20, 30},
+		callback = doStuff,
+		shaders = true
+	})
 
 ![Screenshot](colorPicker.png)
 
 
 ## Usage of colorButton
-Call ``colorButton()`` within your code. It takes 7 arguments:
+Call ``colorButton()`` within your code. It takes a table of arguments:
 
-1. (optional) Parent, LoveFrames object. Default: ``nil``.
-2. (optional) Color, {r, g, b} table. Default: ``{255, 0, 0}``.
-3. (optional) A callback function. A {r, g, b} table is passed to it. Default: ``nil``.
-4. (optional) Width, integer. Default: ``80``.
-5. (optional) Height, integer. Default: ``25``.
-6. (optional) Padding, integer. Default: ``3``.
-7. (optional) The loveframes module itself. Default: ``loveframes``.
+@param ``parent`` (optional) loveframes object. Default: ``nil``.
+@param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
+@param ``callback`` (optional) function. Default: ``nil``.
+@param ``width`` (optional) integer. Default: ``25``.
+@param ``height`` (optional) integer. Default: ``25``.
+@param ``padding`` (optional) integer. Default: ``3``.
+@param ``shaders`` (optional) boolean. Default: ``false``.
+@param ``loveframes`` (optional) module. Default: ``loveframes``.
 
-Returns a modified LoveFrames button. All original methods will still work on it, plus two new: ``GetColor()`` & ``SetColor()``.
+@return modified instance of loveframes button
 
 ## Example usage of colorButton
-	local button = colorButton(nil, {0, 255, 0}, nil, 25, 25, 4)
+	local button = colorButton({
+			color = {0, 255, 0},
+			padding = 4,
+			shaders = true
+		})
 	button:SetPos(100, 100)
 	button:GetColor() -- returns {0, 255, 0}
 
@@ -50,4 +62,4 @@ Returns a modified LoveFrames button. All original methods will still work on it
 
 
 ## Issues
-Pixel manipulation is used to update the colors of the sliders, and it's slow. I might change to shaders in the future, but in the meantime you can require [this](https://github.com/slime73/love-snippets/blob/master/ImageData-FFI/imagedata-ffi.lua) in your project to get a considerable speed boost.
+~~Pixel manipulation is used to update the colors of the sliders, and it's slow.~~
