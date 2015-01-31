@@ -22,7 +22,7 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 Performance difference between shaders/imagedata on my setup:
 
 | ``Avg FPS`` | shaders false | shaders false with [imagedata-ffi](https://github.com/slime73/love-snippets/blob/master/ImageData-FFI/imagedata-ffi.lua) | shaders true |
-| ----------- |:---:|:---:|----:|
+|:------------|----:|----:|----:|
 | idle        | 464 | 465 | 467 |
 | used        | 125 | 215 | 445 |
 
