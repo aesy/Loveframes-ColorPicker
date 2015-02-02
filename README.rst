@@ -1,12 +1,14 @@
 Overview
 ========
 
-A color picker for [Love Frames](https://github.com/NikolaiResokav/LoveFrames) - GUI library for [LÖVE](http://www.love2d.org).
+A color picker for `Love Frames <https://github.com/NikolaiResokav/LoveFrames>`_ - GUI library for `LÖVE <http://www.love2d.org>`_.
 
 Installation
 ------------
 
 Place the ``LoveFrames-ColorPicker`` folder in your working directory, or in a sub-folder, and require it.
+
+.. code-block:: lua
 
 	require("LoveFrames-ColorPicker")
 
@@ -27,10 +29,13 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 
 Performance difference between shaders/imagedata:
 
-| ``Avg FPS`` | shaders false | shaders false with .. imagedata-ffi: https://github.com/slime73/love-snippets/blob/master/ImageData-FFI/imagedata-ffi.lua | shaders true |
-|:------------|----:|----:|----:|
-| idle        | 478 | 478 | 479 |
-| used        | 124 | 193 | 480 |
++-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
+| ``Avg FPS`` | shaders false | shaders false with `imagedata-ffi <https://github.com/slime73/love-snippets/blob/master/ImageData-FFI/imagedata-ffi.lua>`_| shaders true |
++-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
+| idle        |           478 |                                                                                                                       478 |          479 |
++-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
+| used        |           124 |                                                                                                                       193 |          480 |
++-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
 
 Reference System - Intel Core i7 4770K @ 3.50 GHz | AMD Radeon HD 7790 | Windows 8.1
 
@@ -83,4 +88,4 @@ Example
 
 Issues
 ------
-~~Pixel manipulation is used to update the colors of the sliders, and it's slow.~~
+~
