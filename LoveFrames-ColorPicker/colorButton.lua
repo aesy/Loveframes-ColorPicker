@@ -1,3 +1,6 @@
+---------------------------------------------------------
+-- Utility functions
+---------------------------------------------------------
 local function tableCopy(orig)
 	local orig_type = type(orig)
 	local copy
@@ -21,7 +24,7 @@ end
 	- @param 'padding' (optional) integer. Default: 3.
 	- @param any parameter of colorPicker({}).
 	-
-	- @returns modified instance of loveframes button
+	- @returns modified instance of loveframes button.
 --]]---------------------------------------------------------
 function colorButton(options)
 	local options = options or {}
