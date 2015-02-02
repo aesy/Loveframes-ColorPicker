@@ -162,11 +162,6 @@ local function _hsvcolorslider(x, y, cursorSize, width, height)
 	return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
 end
 
-local function _rgbcolor(x, y, cursorSize, width, height)
-	local r, g, b = _hsv2rgb(hue, saturation, value)
-	return r, g, b, 255
-end
-
 local function _relief(x, y, reliefSize, width, height)
 	if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
 		return 0, 0, 0, 0			-- center
@@ -231,7 +226,7 @@ local _shader_bwSlider = [[
 	- @param 'shaders' (optional) boolean. Default: false.
 	- @param 'loveframes' (optional) module. Default: loveframes.
 	-
-	- @returns nil
+	- @returns loveframes frame.
 --]]---------------------------------------------------------
 function colorPicker(options)
 	local options = options or {}
@@ -246,7 +241,7 @@ function colorPicker(options)
 		return { math.floor(r + .5), math.floor(g + .5), math.floor(b + .5) }
 	end
 
-	function _update(ignore)
+	local function _update(ignore)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
@@ -262,7 +257,7 @@ function colorPicker(options)
 			shader_bwSlider:send("value", value)
 		end
 
-		_updateImage(color_current, _rgbcolor) -- add a shader version?
+		color_current.color = {r, g, b}
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
 		if input_green ~= ignore then input_green:SetText(math.floor(g + .5)) end
@@ -521,13 +516,22 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Show start color and current pick
 	---------------------------------------------------------
+	local r, g, b = _hsv2rgb(hue, saturation, value)
 	local color_old = loveframes.Create("image", frame)
 	color_old:SetPos(260, 37)
-	_updateImage(color_old, _rgbcolor, nil, 20, 35)
+	color_old:SetSize(20, 35)
+	color_old.Draw = function(object)
+		love.graphics.setColor({r, g, b})
+		love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
+	end
 
 	color_current = loveframes.Create("image", frame)
 	color_current:SetPos(280, 37)
 	color_current:SetSize(35, 35)
+	color_current.Draw = function(object)
+		love.graphics.setColor(object.color)
+		love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
+	end
 
 	---------------------------------------------------------
 	-- Ok button, callback
@@ -561,4 +565,6 @@ function colorPicker(options)
 	-- Starting values
 	---------------------------------------------------------
 	_update()
+
+	return frame
 end
