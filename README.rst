@@ -3,6 +3,8 @@ Overview
 
 A color picker for `Love Frames <https://github.com/NikolaiResokav/LoveFrames>`_ - GUI library for `LÖVE <http://www.love2d.org>`_.
 
+Works with LÖVE 0.8.0+.
+
 Installation
 ------------
 
@@ -24,18 +26,18 @@ Call ``colorPicker()`` within your code. It takes a table of parameters:
 * @param ``modal`` (optional) boolean. Default: ``true``.
 * @param ``screenLocked`` (optional) boolean. Default: ``true``.
 * @param ``loveframes`` (optional) module. Default: ``loveframes``.
-* @param ``shaders`` (optional) boolean. Default: ``true``. *``Only work with LÖVE past version 0.9.0.``*
+* @param ``shaders`` (optional) boolean. Default: ``false``. *``Only work with LÖVE past version 0.9.0.``*
 * @returns a loveframes frame instance.
 
-Performance difference between shaders/imagedata:
+Performance difference using shaders:
 
-+-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
-| ``Avg FPS`` | shaders false | shaders false with `imagedata-ffi <https://github.com/slime73/love-snippets/blob/master/ImageData-FFI/imagedata-ffi.lua>`_| shaders true |
-+-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
-| idle        |           478 |                                                                                                                       478 |          479 |
-+-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
-| used        |           124 |                                                                                                                       193 |          480 |
-+-------------+---------------+---------------------------------------------------------------------------------------------------------------------------+--------------+
++-------------+---------------+--------------+
+| ``Avg FPS`` | shaders false | shaders true |
++-------------+---------------+--------------+
+| idle        |           454 |          455 |
++-------------+---------------+--------------+
+| used        |           457 |          457 |
++-------------+---------------+--------------+
 
 Reference System - Intel Core i7 4770K @ 3.50 GHz | AMD Radeon HD 7790 | Windows 8.1
 
@@ -50,7 +52,8 @@ Example
 
 	colorPicker({
 		color = {164, 198, 57},
-		callback = doStuff
+		callback = doStuff,
+		shaders = true
 	})
 
 .. image:: colorPicker.png

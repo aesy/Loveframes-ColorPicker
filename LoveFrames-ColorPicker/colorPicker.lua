@@ -132,34 +132,22 @@ end
 ---------------------------------------------------------
 -- Image functions
 ---------------------------------------------------------
-local function _updateImage(object, func, cursorSize, width, height)
-	width = width or object:GetWidth()
-	height = height or  object:GetHeight()
-	local color = love.image.newImageData(width, height)
-	color:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
-	object:SetImage(love.graphics.newImage(color))
+local function _createImage(func, cursorSize, width, height)
+	local image = love.image.newImageData(width, height)
+	image:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
+	return love.graphics.newImage(image)
 end
 
 local function _hsvcolorspace(x, y, cursorSize, width, height)
-	if math.floor(math.sqrt(math.pow(x-hue*width, 2) + math.pow(y-(1-value)*height, 2)) + .5) == cursorSize then
-		if value > .7 then
-			return 0, 0, 0, 255
-		else
-			return 255, 255, 255, 255
-		end
-	end
-	return _hsv2rgb(x/width, saturation, 1 - y/height)
+	return _hsv2rgb(x/width, 1, 1 - y/height)
 end
 
-local function _hsvcolorslider(x, y, cursorSize, width, height)
-	if y >= math.floor((1-saturation)*(height-1)+.5) - cursorSize/2 and y <= math.floor((1-saturation)*(height-1)+.5) + cursorSize/2 then
-		if value > .7 then
-			return 0, 0, 0, 255
-		else
-			return 255, 255, 255, 255
-		end
-	end
-	return _hsv2rgb(hue, 1 - y/height, _clamp(value, 0.4, 1))
+local function _bwgradient(x, y, cursorSize, width, height)
+	return (1-y/height)*255, (1-y/height)*255, (1-y/height)*255
+end
+
+local function _fadegradient(x, y, cursorSize, width, height)
+	return 255, 255, 255, (1-y/height)*255
 end
 
 local function _relief(x, y, reliefSize, width, height)
@@ -176,6 +164,14 @@ local function _relief(x, y, reliefSize, width, height)
 	end
 end
 
+local function _cursorCircle(x, y, cursorSize, width, height)
+	if math.floor(math.sqrt(math.pow(x - width/2, 2) + math.pow(y - height/2, 2)) + 0.5) == cursorSize then
+		return 255, 255, 255, 255
+	else
+		return 0, 0, 0, 0
+	end
+end
+
 ---------------------------------------------------------
 -- Shaders
 ---------------------------------------------------------
@@ -186,31 +182,18 @@ local _shader_hsv2rgb = [[
 ]]
 
 local _shader_colorspace = [[
-	extern float hue;
 	extern float saturation;
-	extern float value;
 
 	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		if (floor(sqrt(pow(abs(texture_coords.x-hue)*200, 2) + pow(abs(texture_coords.y-(1-value))*200, 2)) + 1) == 6) {
-			if (value > 0.7) { return vec4(0, 0, 0, 255); }
-			else { return vec4(255, 255, 255, 255); }
-		}
-
 		return vec4(hsv2rgb(texture_coords.x, saturation, 1 - texture_coords.y), 1.0);
 	}
 ]]
 
 local _shader_bwSlider = [[
 	extern float hue;
-	extern float saturation;
 	extern float value;
 
 	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		if (1 - texture_coords.y - 0.0026 <= saturation && 1 - texture_coords.y + 0.0026 >= saturation) {
-			if (value > 0.7) { return vec4(0, 0, 0, 255); }
-			else { return vec4(255, 255, 255, 255); }
-		}
-
 		return vec4(hsv2rgb(hue, 1 - texture_coords.y, clamp(value, 0.4, 1.)), 1.0);
 	}
 ]]
@@ -245,19 +228,20 @@ function colorPicker(options)
 		local r, g, b = _hsv2rgb(hue, saturation, value)
 		local hex = _rgb2hex(r, g, b)
 
-		if options.shaders == false then
-			_updateImage(colorspace, _hsvcolorspace, 6)
-			_updateImage(bwSlider, _hsvcolorslider, 1)
-		else
-			shader_colorspace:send("hue", hue)
-			shader_colorspace:send("saturation", saturation)
-			shader_colorspace:send("value", value)
-			shader_bwSlider:send("hue", hue)
-			shader_bwSlider:send("saturation", saturation)
-			shader_bwSlider:send("value", value)
-		end
-
 		color_current.color = {r, g, b}
+		colorspace.cursorX = hue
+		colorspace.cursorY = 1 - value
+		bwSlider.cursorY = 1 - saturation
+		bwSlider.alpha = 1 - value
+
+		if options.shaders then
+			colorspace.shader:send("saturation", saturation)
+			bwSlider.shader:send("hue", hue)
+			bwSlider.shader:send("value", value)
+		else
+			colorspace.alpha = saturation
+			bwSlider.color = {_hsv2rgb(hue, 1, 1)}
+		end
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
 		if input_green ~= ignore then input_green:SetText(math.floor(g + .5)) end
@@ -291,23 +275,57 @@ function colorPicker(options)
 	local padding = 2
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief,  _relief, padding, 200+padding*2, 200+padding*2)
+	relief:SetImage(_createImage(_relief, padding, 200+padding*2, 200+padding*2))
 	relief:SetPos(13-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief, _relief, padding, 22+padding*2, 200+padding*2)
+	relief:SetImage(_createImage(_relief, padding, 22+padding*2, 200+padding*2))
 	relief:SetPos(225-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	_updateImage(relief, _relief, padding, 55+padding*2, 35+padding*2)
+	relief:SetImage(_createImage(_relief, padding, 55+padding*2, 35+padding*2))
 	relief:SetPos(260-padding, 37-padding)
 
 	---------------------------------------------------------
 	-- Create HSV color space
 	---------------------------------------------------------
+	local width, height = 200, 200
+
 	colorspace = loveframes.Create("image", frame)
-	colorspace:SetImage(love.graphics.newImage(love.image.newImageData(200, 200)))
 	colorspace:SetPos(13, 37)
+	colorspace:SetSize(width, height)
+	colorspace.colorImage = _createImage(_hsvcolorspace, nil, width, height)
+	colorspace.alphaImage = _createImage(_bwgradient, nil, width, height)
+	colorspace.cursor = _createImage(_cursorCircle, 5, 14, 14)
+
+	colorspace.Draw = function(object)
+		if object.shader then
+			love.graphics.setShader(object.shader)
+			love.graphics.draw(object.colorImage, object:GetX(), object:GetY())
+			love.graphics.setShader()
+		else
+			love.graphics.setColor(255, 255, 255)
+			love.graphics.draw(object.colorImage, object:GetX(), object:GetY())
+
+			love.graphics.setColor(255, 255, 255, (1 - object.alpha)*255)
+			love.graphics.draw(object.alphaImage, object:GetX(), object:GetY())
+		end
+
+		mask = function()
+		   love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
+		end
+
+		if object.cursorY > 0.3 then
+			love.graphics.setColor(255, 255, 255)
+		else
+			love.graphics.setColor(0, 0, 0)
+		end
+
+		love.graphics.setStencil(mask)
+		local width, height = object.cursor:getDimensions()
+		love.graphics.draw(object.cursor, object:GetX()+object.width*(object.cursorX or 0)-width/2, object:GetY()+object.height*(object.cursorY or 0)-height/2)
+		love.graphics.setStencil()
+	end
 
 	colorspace.Update = function(object, dt)
 		if object.dragging then
@@ -334,8 +352,34 @@ function colorPicker(options)
 	-- Create satutation slider
 	---------------------------------------------------------
 	bwSlider = loveframes.Create("image", frame)
-	bwSlider:SetImage(love.graphics.newImage(love.image.newImageData(22, 200)))
 	bwSlider:SetPos(225, 37)
+	bwSlider:SetSize(22, 200)
+	bwSlider:SetImage(_createImage(_fadegradient, nil, bwSlider:GetSize()))
+
+	bwSlider.Draw = function(object)
+		if object.shader then
+			love.graphics.setShader(object.shader)
+			love.graphics.draw(object.image, object:GetX(), object:GetY())
+			love.graphics.setShader()
+		else
+			love.graphics.setColor(255, 255, 255)
+			love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
+
+			love.graphics.setColor(unpack(object.color or {255, 0, 0}))
+			love.graphics.draw(object.image, object:GetX(), object:GetY())
+
+			love.graphics.setColor(0, 0, 0, _clamp(object.alpha, 0, 0.7)*255)
+			love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
+		end
+
+		if object.alpha > 0.3 then
+			love.graphics.setColor(255, 255, 255)
+		else
+			love.graphics.setColor(0, 0, 0)
+		end
+
+		love.graphics.rectangle("fill", object:GetX(), object:GetY() + object.cursorY*(object:GetHeight()-1), object:GetWidth(), 1)
+	end
 
 	bwSlider.Update = function(object, dt)
 		if object.dragging then
@@ -360,21 +404,9 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Use shaders
 	---------------------------------------------------------
-	if options.shaders ~= false then
-		shader_colorspace = love.graphics.newShader(_shader_hsv2rgb .. _shader_colorspace)
-		shader_bwSlider = love.graphics.newShader(_shader_hsv2rgb .. _shader_bwSlider)
-
-		colorspace.Draw = function(object)
-			love.graphics.setShader(shader_colorspace)
-			love.graphics.draw(object.image, object:GetX(), object:GetY())
-			love.graphics.setShader()
-		end
-
-		bwSlider.Draw = function(object)
-			love.graphics.setShader(shader_bwSlider)
-			love.graphics.draw(object.image, object:GetX(), object:GetY())
-			love.graphics.setShader()
-		end
+	if options.shaders then
+		colorspace.shader = love.graphics.newShader(_shader_hsv2rgb .. _shader_colorspace)
+		bwSlider.shader = love.graphics.newShader(_shader_hsv2rgb .. _shader_bwSlider)
 	end
 
 	---------------------------------------------------------
