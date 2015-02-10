@@ -1,19 +1,5 @@
----------------------------------------------------------
--- Utility functions
----------------------------------------------------------
-local function tableCopy(orig)
-	local orig_type = type(orig)
-	local copy
-	if orig_type == 'table' then
-		copy = {}
-		for orig_key, orig_value in pairs(orig) do
-			copy[orig_key] = orig_value
-		end
-	else
-		copy = orig
-	end
-	return copy
-end
+local path = (...):match("(.-)[^%.]+$")
+local utils = require(path .. "utils.utils")
 
 --[[---------------------------------------------------------
 	- colorButton({})
@@ -77,7 +63,7 @@ function colorButton(options)
 			end
 		end
 
-		local parameters = tableCopy(options)
+		local parameters = utils.table_copy(options)
 		parameters.callback = func
 		parameters.color = object.color
 		colorPicker(parameters)

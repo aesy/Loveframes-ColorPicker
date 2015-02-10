@@ -1,3 +1,8 @@
+local path = (...):match("(.-)[^%.]+$")
+local utils = require(path .. "utils.utils")
+local color_conversion = require(path .. "utils.color")
+local graphics = require(path .. "utils.graphics")
+
 ---------------------------------------------------------
 -- Color presets
 ---------------------------------------------------------
@@ -18,185 +23,6 @@ local color_presets = {
 	["Red"]           	 = { 255,   0,   0 },
 	["Rose Red"]    	 = { 255,   3,  62 },
 }
-
----------------------------------------------------------
--- Color conversion functions
----------------------------------------------------------
-local function _hsv2rgb(h, s, v)
-	h = (h*6)%6
-	local i = math.floor(h)
-	local p = 255*v
-	local q = p*(1-s)
-
-	if i == 0 then
-		return p, q + p*s*(h-i), q
-	elseif i == 1 then
-		return p*(1-s*(h-i)), p, q
-	elseif i == 2 then
-		return q, p, q+p*s*(h-i)
-	elseif i == 3 then
-		return q, p*(1-s*(h-i)), p
-	elseif i == 4 then
-		return q+p*s*(h-i), q, p
-	elseif i == 5 then
-		return p, q, p*(1-s*(h-i))
-	end
-end
-
-local function _rgb2hsv(r, g, b)
-	local h
-	local rgb_max = math.max(r,g,b)
-	local rgb_min = math.min(r,g,b)
-
-	if rgb_min < rgb_max then
-		if rgb_max == r then
-			h = (g-b)/(r-rgb_min)*60
-		elseif rgb_max == g then
-			h = 120+(b-r)/(g-rgb_min)*60
-		else
-			h = 240+(r-g)/(b-rgb_min)*60
-		end
-
-		if h < 0 then
-			h = h+360
-		end
-
-		return h/360, 1-rgb_min/rgb_max, rgb_max/255
-	else
-		return 0, 0, rgb_max/255
-	end
-end
-
-local function _hex2rgb(hex)
-	return  tonumber("0x" .. hex:sub(1,2)), tonumber("0x" .. hex:sub(3,4)), tonumber("0x" .. hex:sub(5,6))
-end
-
-local function _rgb2hex(r, g, b)
-	local function _dec2hex(dec)
-		local b, k, out, i, d = 16, "0123456789ABCDEF", "", 0
-		while dec > 0 do
-			i = i + 1
-			dec, d = math.floor(dec / b), math.fmod(dec, b) + 1
-			out = string.sub(k, d, d) .. out
-		end
-		while out:len() < 2 do out = "0" .. out end
-		return out
-	end
-
-	return _dec2hex(r) .. _dec2hex(g) .. _dec2hex(b)
-end
-
----------------------------------------------------------
--- Utility functions
----------------------------------------------------------
-local function _clamp(val, lower, upper)
-	if lower > upper then
-		lower, upper = upper, lower
-	end
-
-	return math.max(lower, math.min(upper, val))
-end
-
-local function _genOrderedIndex(tbl)
-	local orderedIndex = {}
-	for key in pairs(tbl) do
-		table.insert(orderedIndex, key)
-	end
-	table.sort(orderedIndex)
-	return orderedIndex
-end
-
-local function _orderedNext(tbl, state)
-	if state == nil then
-		tbl.__orderedIndex = _genOrderedIndex(tbl)
-		key = tbl.__orderedIndex[1]
-		return key, tbl[key]
-	end
-	key = nil
-	for i = 1,table.getn(tbl.__orderedIndex) do
-		if tbl.__orderedIndex[i] == state then
-			key = tbl.__orderedIndex[i+1]
-		end
-	end
-	if key then
-		return key, tbl[key]
-	end
-	tbl.__orderedIndex = nil
-	return
-end
-
-local function _orderedPairs(tbl)
-	return _orderedNext, tbl, nil
-end
-
----------------------------------------------------------
--- Image functions
----------------------------------------------------------
-local function _createImage(func, cursorSize, width, height)
-	local image = love.image.newImageData(width, height)
-	image:mapPixel(function(x, y) return func(x, y, cursorSize, width, height) end)
-	return love.graphics.newImage(image)
-end
-
-local function _hsvcolorspace(x, y, cursorSize, width, height)
-	return _hsv2rgb(x/width, 1, 1 - y/height)
-end
-
-local function _bwgradient(x, y, cursorSize, width, height)
-	return (1-y/height)*255, (1-y/height)*255, (1-y/height)*255
-end
-
-local function _fadegradient(x, y, cursorSize, width, height)
-	return 255, 255, 255, (1-y/height)*255
-end
-
-local function _relief(x, y, reliefSize, width, height)
-	if reliefSize and x > reliefSize and x < width-reliefSize and y > reliefSize and y < height-reliefSize then
-		return 0, 0, 0, 0			-- center
-	elseif x < width/2 and x < y and x < height-y then
-		return 100, 100, 100, 255	-- left
-	elseif x >= width/2 and width-x <= y and width-x <= height-y then
-		return 255, 255, 255, 255	-- right
-	elseif y < height/2 then
-		return 100, 100, 100, 255	-- up
-	elseif y >= height/2 then
-		return 255, 255, 255, 255	-- down
-	end
-end
-
-local function _cursorCircle(x, y, cursorSize, width, height)
-	if math.floor(math.sqrt(math.pow(x - width/2, 2) + math.pow(y - height/2, 2)) + 0.5) == cursorSize then
-		return 255, 255, 255, 255
-	else
-		return 0, 0, 0, 0
-	end
-end
-
----------------------------------------------------------
--- Shaders
----------------------------------------------------------
-local _shader_hsv2rgb = [[
-	vec3 hsv2rgb(float h, float s, float v) {
-		return mix(vec3(1.),clamp((abs(fract(h+vec3(3.,2.,1.)/3.)*6.-3.)-1.),0.,1.),s)*v;
-	}
-]]
-
-local _shader_colorspace = [[
-	extern float saturation;
-
-	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		return vec4(hsv2rgb(texture_coords.x, saturation, 1 - texture_coords.y), 1.0);
-	}
-]]
-
-local _shader_bwSlider = [[
-	extern float hue;
-	extern float value;
-
-	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-		return vec4(hsv2rgb(hue, 1 - texture_coords.y, clamp(value, 0.4, 1.)), 1.0);
-	}
-]]
 
 --[[---------------------------------------------------------
 	- colorPicker({})
@@ -220,27 +46,27 @@ function colorPicker(options)
 	-- local functions
 	---------------------------------------------------------
 	local function _getColor()
-		local r, g, b = _hsv2rgb(hue, saturation, value)
+		local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
 		return { math.floor(r + .5), math.floor(g + .5), math.floor(b + .5) }
 	end
 
 	local function _update(ignore)
-		local r, g, b = _hsv2rgb(hue, saturation, value)
-		local hex = _rgb2hex(r, g, b)
+		local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
+		local hex = color_conversion.rgb2hex(r, g, b)
 
 		color_current.color = {r, g, b}
-		colorspace.cursorX = hue
-		colorspace.cursorY = 1 - value
-		bwSlider.cursorY = 1 - saturation
-		bwSlider.alpha = 1 - value
+		hsv_colorspace.cursorX = hue
+		hsv_colorspace.cursorY = 1 - value
+		hsv_slider.cursorY = 1 - saturation
+		hsv_slider.alpha = 1 - value
 
 		if options.shaders then
-			colorspace.shader:send("saturation", saturation)
-			bwSlider.shader:send("hue", hue)
-			bwSlider.shader:send("value", value)
+			hsv_colorspace.shader:send("saturation", saturation)
+			hsv_slider.shader:send("hue", hue)
+			hsv_slider.shader:send("value", value)
 		else
-			colorspace.alpha = saturation
-			bwSlider.color = {_hsv2rgb(hue, 1, 1)}
+			hsv_colorspace.alpha = saturation
+			hsv_slider.color = {color_conversion.hsv2rgb(hue, 1, 1)}
 		end
 
 		if input_red ~= ignore then input_red:SetText(math.floor(r + .5)) end
@@ -255,7 +81,7 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Local variables
 	---------------------------------------------------------
-	hue, saturation, value = _rgb2hsv(unpack(options.color or {255, 0, 0}))
+	hue, saturation, value = color_conversion.rgb2hsv(unpack(options.color or {255, 0, 0}))
 
 	---------------------------------------------------------
 	-- Create window frame
@@ -275,15 +101,15 @@ function colorPicker(options)
 	local padding = 2
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(_createImage(_relief, padding, 200+padding*2, 200+padding*2))
+	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 200+padding*2, 200+padding*2))
 	relief:SetPos(13-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(_createImage(_relief, padding, 22+padding*2, 200+padding*2))
+	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 22+padding*2, 200+padding*2))
 	relief:SetPos(225-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(_createImage(_relief, padding, 55+padding*2, 35+padding*2))
+	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 55+padding*2, 35+padding*2))
 	relief:SetPos(260-padding, 37-padding)
 
 	---------------------------------------------------------
@@ -291,14 +117,14 @@ function colorPicker(options)
 	---------------------------------------------------------
 	local width, height = 200, 200
 
-	colorspace = loveframes.Create("image", frame)
-	colorspace:SetPos(13, 37)
-	colorspace:SetSize(width, height)
-	colorspace.colorImage = _createImage(_hsvcolorspace, nil, width, height)
-	colorspace.alphaImage = _createImage(_bwgradient, nil, width, height)
-	colorspace.cursor = _createImage(_cursorCircle, 5, 14, 14)
+	hsv_colorspace = loveframes.Create("image", frame)
+	hsv_colorspace:SetPos(13, 37)
+	hsv_colorspace:SetSize(width, height)
+	hsv_colorspace.colorImage = graphics.create_image(graphics.image_functions.hsv_colorspace, nil, width, height)
+	hsv_colorspace.alphaImage = graphics.create_image(graphics.image_functions.gradient, nil, width, height)
+	hsv_colorspace.cursor = graphics.create_image(graphics.image_functions.cursor_circle, 5, 14, 14)
 
-	colorspace.Draw = function(object)
+	hsv_colorspace.Draw = function(object)
 		if object.shader then
 			love.graphics.setShader(object.shader)
 			love.graphics.draw(object.colorImage, object:GetX(), object:GetY())
@@ -327,22 +153,22 @@ function colorPicker(options)
 		love.graphics.setStencil()
 	end
 
-	colorspace.Update = function(object, dt)
+	hsv_colorspace.Update = function(object, dt)
 		if object.dragging then
-			hue = _clamp((love.mouse.getX() - object:GetX()) / object:GetWidth(), 0, 1)
-			value = 1 - _clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
+			hue = utils.clamp((love.mouse.getX() - object:GetX()) / object:GetWidth(), 0, 1)
+			value = 1 - utils.clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
 			_update()
 		end
 	end
 
-	colorspace.mousepressed = function(object, x, y)
+	hsv_colorspace.mousepressed = function(object, x, y)
 		if object.hover then
 			choice_presets:SetChoice("Presets")
 			object.dragging = true
 		end
 	end
 
-	colorspace.mousereleased = function(object, x, y)
+	hsv_colorspace.mousereleased = function(object, x, y)
 		if object.dragging then
 			object.dragging = false
 		end
@@ -351,12 +177,12 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Create satutation slider
 	---------------------------------------------------------
-	bwSlider = loveframes.Create("image", frame)
-	bwSlider:SetPos(225, 37)
-	bwSlider:SetSize(22, 200)
-	bwSlider:SetImage(_createImage(_fadegradient, nil, bwSlider:GetSize()))
+	hsv_slider = loveframes.Create("image", frame)
+	hsv_slider:SetPos(225, 37)
+	hsv_slider:SetSize(22, 200)
+	hsv_slider:SetImage(graphics.create_image(graphics.image_functions.fade_gradient, nil, hsv_slider:GetSize()))
 
-	bwSlider.Draw = function(object)
+	hsv_slider.Draw = function(object)
 		if object.shader then
 			love.graphics.setShader(object.shader)
 			love.graphics.draw(object.image, object:GetX(), object:GetY())
@@ -368,7 +194,7 @@ function colorPicker(options)
 			love.graphics.setColor(unpack(object.color or {255, 0, 0}))
 			love.graphics.draw(object.image, object:GetX(), object:GetY())
 
-			love.graphics.setColor(0, 0, 0, _clamp(object.alpha, 0, 0.7)*255)
+			love.graphics.setColor(0, 0, 0, utils.clamp(object.alpha, 0, 0.7)*255)
 			love.graphics.rectangle("fill", object:GetX(), object:GetY(), object:GetWidth(), object:GetHeight())
 		end
 
@@ -381,21 +207,21 @@ function colorPicker(options)
 		love.graphics.rectangle("fill", object:GetX(), object:GetY() + object.cursorY*(object:GetHeight()-1), object:GetWidth(), 1)
 	end
 
-	bwSlider.Update = function(object, dt)
+	hsv_slider.Update = function(object, dt)
 		if object.dragging then
-			saturation = 1 - _clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
+			saturation = 1 - utils.clamp((love.mouse.getY() - object:GetY()) / object:GetHeight(), 0, 1)
 			_update()
 		end
 	end
 
-	bwSlider.mousepressed = function(object, x, y)
+	hsv_slider.mousepressed = function(object, x, y)
 		if object.hover then
 			choice_presets:SetChoice("Presets")
 			object.dragging = true
 		end
 	end
 
-	bwSlider.mousereleased = function(object, x, y)
+	hsv_slider.mousereleased = function(object, x, y)
 		if object.dragging then
 			object.dragging = false
 		end
@@ -405,8 +231,8 @@ function colorPicker(options)
 	-- Use shaders
 	---------------------------------------------------------
 	if options.shaders then
-		colorspace.shader = love.graphics.newShader(_shader_hsv2rgb .. _shader_colorspace)
-		bwSlider.shader = love.graphics.newShader(_shader_hsv2rgb .. _shader_bwSlider)
+		hsv_colorspace.shader = love.graphics.newShader(graphics.shaders.hsv2rgb .. graphics.shaders.hsv_colorspace)
+		hsv_slider.shader = love.graphics.newShader(graphics.shaders.hsv2rgb .. graphics.shaders.hsv_slider)
 	end
 
 	---------------------------------------------------------
@@ -428,7 +254,7 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 360 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 360))
+				object:SetText(utils.clamp(tonumber(text), 0, 360))
 			end
 			hue = tonumber(object:GetText()) / 360
 			_update(object)
@@ -443,7 +269,7 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 100 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 100))
+				object:SetText(utils.clamp(tonumber(text), 0, 100))
 			end
 			saturation = tonumber(object:GetText()) / 100
 			_update(object)
@@ -458,7 +284,7 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 100 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 100))
+				object:SetText(utils.clamp(tonumber(text), 0, 100))
 			end
 			value = tonumber(object:GetText()) / 100
 			_update(object)
@@ -473,10 +299,10 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 255 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 255))
+				object:SetText(utils.clamp(tonumber(text), 0, 255))
 			end
-			local r, g, b = _hsv2rgb(hue, saturation, value)
-			hue, saturation, value = _rgb2hsv(tonumber(object:GetText()), g, b)
+			local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
+			hue, saturation, value = color_conversion.rgb2hsv(tonumber(object:GetText()), g, b)
 			_update(object)
 		end
 	end
@@ -489,10 +315,10 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 255 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 255))
+				object:SetText(utils.clamp(tonumber(text), 0, 255))
 			end
-			local r, g, b = _hsv2rgb(hue, saturation, value)
-			hue, saturation, value = _rgb2hsv(r, tonumber(object:GetText()), b)
+			local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
+			hue, saturation, value = color_conversion.rgb2hsv(r, tonumber(object:GetText()), b)
 			_update(object)
 		end
 	end
@@ -505,10 +331,10 @@ function colorPicker(options)
 		local text = object:GetText()
 		if text ~= "" then
 			if tonumber(text) > 255 or tonumber(text) < 0 then
-				object:SetText(_clamp(tonumber(text), 0, 255))
+				object:SetText(utils.clamp(tonumber(text), 0, 255))
 			end
-			local r, g, b = _hsv2rgb(hue, saturation, value)
-			hue, saturation, value = _rgb2hsv(r, g, tonumber(object:GetText()))
+			local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
+			hue, saturation, value = color_conversion.rgb2hsv(r, g, tonumber(object:GetText()))
 			_update(object)
 		end
 	end
@@ -520,7 +346,7 @@ function colorPicker(options)
 	input_HEX.OnTextChanged = function(object)
 		local text = object:GetText()
 		if text ~= "" and text:len() == 6 then
-			hue, saturation, value = _rgb2hsv(_hex2rgb(text))
+			hue, saturation, value = color_conversion.rgb2hsv(_hex2rgb(text))
 			_update(object)
 		end
 	end
@@ -548,7 +374,7 @@ function colorPicker(options)
 	---------------------------------------------------------
 	-- Show start color and current pick
 	---------------------------------------------------------
-	local r, g, b = _hsv2rgb(hue, saturation, value)
+	local r, g, b = color_conversion.hsv2rgb(hue, saturation, value)
 	local color_old = loveframes.Create("image", frame)
 	color_old:SetPos(260, 37)
 	color_old:SetSize(20, 35)
@@ -585,11 +411,11 @@ function colorPicker(options)
 	choice_presets:SetPos(260, 212)
 	choice_presets:SetWidth(125)
 	choice_presets:SetText("Presets")
-	for choice in _orderedPairs(color_presets) do
+	for choice in utils.ordered_pairs(color_presets) do
 		choice_presets:AddChoice(choice)
 	end
 	choice_presets.OnChoiceSelected = function(object, choice)
-		hue, saturation, value = _rgb2hsv(unpack(color_presets[choice]))
+		hue, saturation, value = color_conversion.rgb2hsv(unpack(color_presets[choice]))
 		_update()
 	end
 
