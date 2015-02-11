@@ -99,15 +99,13 @@ Example
 -------
 .. code-block:: lua
 
-	local gradient
+	local image
 
 	function doStuff(gradient)
-		gradient = gradient.createImage(600, 300, "vertical")
+		image = gradient.createImage(600, 300, "vertical")
 	end
 
 	local button = loveframes.Create("button")
-	button:SetSize(100, 40)
-	button:SetPos(100, 100)
 	button:SetText("Gradient Editor")
 	button.OnClick = function()
 		gradientEditor({
