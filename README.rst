@@ -1,13 +1,12 @@
 Overview
 ========
-
 A color picker for `Love Frames <https://github.com/NikolaiResokav/LoveFrames>`_ - GUI library for `LÖVE <http://www.love2d.org>`_.
 
-Works with LÖVE 0.8.0+.
+Compatible with LÖVE 0.8.0 -> 0.9.1.
+
 
 Installation
 ------------
-
 Place the ``LoveFrames-ColorPicker`` folder in your working directory, or in a sub-folder, and require it.
 
 .. code-block:: lua
@@ -17,7 +16,6 @@ Place the ``LoveFrames-ColorPicker`` folder in your working directory, or in a s
 
 Usage of colorPicker
 --------------------
-
 Call ``colorPicker()`` within your code. It takes a table of parameters:
 
 * @param ``color`` (optional) rgb table. Default: ``{255, 0, 0}``.
@@ -43,7 +41,6 @@ Reference System - Intel Core i7 4770K @ 3.50 GHz | AMD Radeon HD 7790 | Windows
 
 Example
 -------
-
 .. code-block:: lua
 
 	function doStuff(color)
@@ -59,9 +56,9 @@ Example
 .. image:: colorPicker.png
   :alt: Screenshot
 
+
 Usage of colorButton
 --------------------
-
 Call ``colorButton()`` within your code. It takes a table of parameters:
 
 * @param ``parent`` (optional) loveframes object. Default: ``nil``.
@@ -76,7 +73,6 @@ The returned object has all methods of a loveframes button, plus two more: ``Get
 
 Example
 -------
-
 .. code-block:: lua
 
 	local button = colorButton({
@@ -88,6 +84,39 @@ Example
 
 .. image:: colorButton.gif
   :alt: Screenshot
+
+
+Usage of gradientEditor
+-----------------------
+WORK IN PROGRESS
+
+Call ``gradientEditor()`` within your code. It takes a table of parameters:
+
+* @param same as ``colorPicker()``.
+* @returns a modified instance of loveframes button.
+
+Example
+-------
+.. code-block:: lua
+	local gradient
+
+	function doStuff(gradient)
+		gradient = gradient.createImage(600, 300, "vertical")
+	end
+
+	local button = loveframes.Create("button")
+	button:SetSize(100, 40)
+	button:SetPos(100, 100)
+	button:SetText("Gradient Editor")
+	button.OnClick = function()
+		gradientEditor({
+			callback = doStuff
+		})
+	end
+
+.. image:: gradientEditor.gif
+  :alt: Screenshot
+
 
 Issues
 ------
