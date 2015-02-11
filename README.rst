@@ -113,7 +113,7 @@ Example
 		})
 	end
 
-.. image:: gradientEditor.gif
+.. image:: gradientEditor.png
   :alt: Screenshot
 
 
