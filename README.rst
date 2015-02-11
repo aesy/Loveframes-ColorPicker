@@ -2,7 +2,7 @@ Overview
 ========
 A color picker for `Love Frames <https://github.com/NikolaiResokav/LoveFrames>`_ - GUI library for `LÖVE <http://www.love2d.org>`_.
 
-Compatible with LÖVE 0.8.0 -> 0.9.1.
+Compatible with LÖVE 0.8.0 - 0.9.1.
 
 
 Installation
@@ -98,6 +98,7 @@ Call ``gradientEditor()`` within your code. It takes a table of parameters:
 Example
 -------
 .. code-block:: lua
+
 	local gradient
 
 	function doStuff(gradient)

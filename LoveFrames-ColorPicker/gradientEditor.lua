@@ -2,7 +2,7 @@ local path = (...):match("(.-)[^%.]+$")
 local graphics = require(path .. "utils.graphics")
 local utils = require(path .. "utils.utils")
 
--- TODO in order or priority
+-- TODO in order of priority
 -- Add step to left or right
 -- Reset & Save button + name field
 -- Selection & step markers
