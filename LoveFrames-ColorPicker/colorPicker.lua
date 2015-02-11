@@ -101,15 +101,15 @@ function colorPicker(options)
 	local padding = 2
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 200+padding*2, 200+padding*2))
+	relief:SetImage(graphics.create_image(200+padding*2, 200+padding*2, graphics.image_functions.relief, {["size"]=padding}))
 	relief:SetPos(13-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 22+padding*2, 200+padding*2))
+	relief:SetImage(graphics.create_image(22+padding*2, 200+padding*2, graphics.image_functions.relief, {["size"]=padding}))
 	relief:SetPos(225-padding, 37-padding)
 
 	local relief = loveframes.Create("image", frame)
-	relief:SetImage(graphics.create_image(graphics.image_functions.relief, padding, 55+padding*2, 35+padding*2))
+	relief:SetImage(graphics.create_image(55+padding*2, 35+padding*2, graphics.image_functions.relief, {["size"]=padding}))
 	relief:SetPos(260-padding, 37-padding)
 
 	---------------------------------------------------------
@@ -120,9 +120,14 @@ function colorPicker(options)
 	hsv_colorspace = loveframes.Create("image", frame)
 	hsv_colorspace:SetPos(13, 37)
 	hsv_colorspace:SetSize(width, height)
-	hsv_colorspace.colorImage = graphics.create_image(graphics.image_functions.hsv_colorspace, nil, width, height)
-	hsv_colorspace.alphaImage = graphics.create_image(graphics.image_functions.gradient, nil, width, height)
-	hsv_colorspace.cursor = graphics.create_image(graphics.image_functions.cursor_circle, 5, 14, 14)
+	hsv_colorspace.colorImage = graphics.create_image(width, height, graphics.image_functions.hsv_colorspace)
+	hsv_colorspace.alphaImage = graphics.create_image(width, height,
+		graphics.image_functions.gradient, {
+			["from"] = {255, 255, 255},
+			["to"] = {0, 0, 0},
+			["direction"] = "vertical",
+		})
+	hsv_colorspace.cursor = graphics.create_image(14, 14, graphics.image_functions.cursor_circle, {["size"]=5})
 
 	hsv_colorspace.Draw = function(object)
 		if object.shader then
@@ -178,9 +183,13 @@ function colorPicker(options)
 	-- Create satutation slider
 	---------------------------------------------------------
 	hsv_slider = loveframes.Create("image", frame)
+	hsv_slider:SetImage(graphics.create_image(22, 200,
+		graphics.image_functions.gradient, {
+			["from"] = {255, 255, 255, 255},
+			["to"] = {255, 255, 255, 0},
+			["direction"] = "vertical",
+		}))
 	hsv_slider:SetPos(225, 37)
-	hsv_slider:SetSize(22, 200)
-	hsv_slider:SetImage(graphics.create_image(graphics.image_functions.fade_gradient, nil, hsv_slider:GetSize()))
 
 	hsv_slider.Draw = function(object)
 		if object.shader then
@@ -346,7 +355,7 @@ function colorPicker(options)
 	input_HEX.OnTextChanged = function(object)
 		local text = object:GetText()
 		if text ~= "" and text:len() == 6 then
-			hue, saturation, value = color_conversion.rgb2hsv(_hex2rgb(text))
+			hue, saturation, value = color_conversion.rgb2hsv(color_conversion.hex2rgb(text))
 			_update(object)
 		end
 	end

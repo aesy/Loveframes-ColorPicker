@@ -51,7 +51,8 @@ function colorButton(options)
 		else
 			drawfunc(self)
 		end
-		love.graphics.setColor(self.color)
+		local r, g, b = unpack(self.color)
+		love.graphics.setColor({r, g, b})
 		love.graphics.rectangle("fill", self.x + self.padding, self.y + self.padding, self.width - self.padding*2, self.height - self.padding*2)
 	end
 
@@ -63,7 +64,7 @@ function colorButton(options)
 			end
 		end
 
-		local parameters = utils.table_copy(options)
+		local parameters = utils.shallow_copy(options)
 		parameters.callback = func
 		parameters.color = object.color
 		colorPicker(parameters)
