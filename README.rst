@@ -99,10 +99,9 @@ Example
 -------
 .. code-block:: lua
 
-	local image
-
 	function doStuff(gradient)
-		image = gradient.createImage(600, 300, "vertical")
+		local image = gradient:CreateImage(600, 300, "vertical")
+		-- do something with image
 	end
 
 	local button = loveframes.Create("button")
