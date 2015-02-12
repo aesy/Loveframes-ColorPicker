@@ -1,14 +1,30 @@
 ---------------------------------------------------------
 -- Utility functions
 ---------------------------------------------------------
-local function clamp(val, lower, upper)
-	assert(val and lower and upper, "Required argument missing")
+local function clamp(val, first, second)
+	assert(val and first, "Required argument missing")
 
-	if lower > upper then
-		lower, upper = upper, lower
+	if first and not second then
+		if val > first then
+			return math.min(val, first)
+		else
+			return math.max(val, first)
+		end
+	else
+		if first > second then
+			first, second = second, first
+		end
+
+		return math.max(first, math.min(second, val))
 	end
+end
 
-	return math.max(lower, math.min(upper, val))
+local function ternary(cond, a, b)
+    if cond then
+    	return a
+    else
+    	return b
+    end
 end
 
 local function deep_copy(t)
@@ -107,8 +123,8 @@ local function grid(index, width, height, cell_width, cell_height, padding)
 	end
 end
 
-function serialize(tbl)
-	local data = "return "
+function serialize(tbl, name)
+	local data = name and name .. " = " or "return "
 
 	local function add(value, name, indent)
 		indent = indent or ""
@@ -155,4 +171,5 @@ return {
 	["sort_by_value"] = sort_by_value,
 	["grid"] = grid,
 	["serialize"] = serialize,
+	["ternary"] = ternary,
 }

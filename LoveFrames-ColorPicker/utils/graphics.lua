@@ -1,6 +1,7 @@
 local path = (...):match("(.-)[^%.]+$")
 local color_conversion = require(path .. "color")
 local utils = require(path .. "utils")
+local calc = require(path .. "calc")
 
 ---------------------------------------------------------
 -- Image functions
@@ -21,9 +22,10 @@ end
 
 image_functions.gradient = function(x, y, width, height, options)
 	assert(options.from, "Color table is nil!")
+
 	local from = options.from or false
 	local to = options.to or from
-	local dir = (options.direction == "horizontal") and {x, width} or {y, height}
+	local dir = utils.ternary(options.direction == "horizontal", {x, width}, {y, height})
 	to[4] = to[4] or 255
 	from[4] = from[4] or 255
 
@@ -38,20 +40,12 @@ end
 
 image_functions.multi_gradient = function(x, y, width, height, options)
 	assert(options.colors, "Color table is nil!")
-	local dir = (options.direction == "horizontal") and {x, width} or {y, height}
+
+	local dir = utils.ternary(options.direction == "horizontal", {x, width}, {y, height})
 	local tbl = utils.sort_by_value(options.colors, "position")
-	local smoothness = options.smoothness and utils.clamp(1 - options.smoothness, 0, 1) or 0
+	local smoothness = utils.ternary(options.smoothness, utils.clamp(1 - options.smoothness, 0, 1), 0)
 
-	local amplitude = 500
-	smoothness = 1 - math.sqrt(1 - math.pow(smoothness, 6))
-	-- local breakpoint = {0.6, 10}
-	-- if smoothness <= breakpoint[1] then
-	-- 	smoothness = breakpoint[2]/amplitude - breakpoint[2]/amplitude*(1 - smoothness/breakpoint[1])
-	-- else
-	-- 	smoothness = breakpoint[2]/amplitude + (1 - breakpoint[2]/amplitude)*math.pow((smoothness - breakpoint[1])/(1 - breakpoint[1]), 3)
-	-- end
-	smoothness = 1 + smoothness*(amplitude - 1)
-
+	smoothness = calc.transition.ease_in(smoothness, 6, 1, 500)
 
 	if tbl[1]["position"] ~= 0 then
 		table.insert(tbl, 1, {
@@ -67,7 +61,8 @@ image_functions.multi_gradient = function(x, y, width, height, options)
 		if pos <= (to.position or 1) and pos >= from.position then
 			local i = (pos - from.position)*dir[2]
 			local length = ((to.position or 1) - from.position)*dir[2]
-			i = math.pow(i/length, smoothness) / (math.pow(i/length, smoothness) + math.pow(1 - i/length, smoothness))*length
+
+			i = calc.transition.ease_in_out(i / length, smoothness, 0, length)
 
 			return image_functions.gradient(i, i, length, length, {
 				from = from.color,
@@ -112,7 +107,7 @@ end
 image_functions.cursor_circle = function(x, y, width, height, options)
 	local size = options.size or 0
 
-	if math.floor(math.sqrt(math.pow(x - width/2, 2) + math.pow(y - height/2, 2)) + 0.5) == size then
+	if math.floor(calc.magnitude(x - width/2, y - height/2) + 0.5) == size then
 		return 255, 255, 255, 255
 	else
 		return 0, 0, 0, 0
