@@ -15,7 +15,7 @@ local utils = require(path .. "utils.utils")
 	- @param any parameter of colorPicker({}).
 	-
 	-
-	- @returns loveframes self.frame.
+	- @returns loveframes frame.
 --]]---------------------------------------------------------
 gradientEditor = {}
 
@@ -41,12 +41,10 @@ end
 setmetatable(gradientEditor, { __call = gradientEditor.Open })
 
 
-function gradientEditor:CreateImage(gradient, width, height, direction)
-	direction = utils.ternary(type(direction) == "string", direction, "horizontal")
-
+function gradientEditor:CreateImage(gradient, width, height, rotate)
 	return graphics.create_image(width, height,
-		graphics.image_functions.multi_gradient, {
-			["direction"] = direction,
+		graphics.image_functions.gradient, {
+			["rotate"] = rotate,
 			["colors"] = utils.shallow_copy(gradient.data),
 			["smoothness"] = gradient.settings.smoothness,
 		}
@@ -69,7 +67,7 @@ function gradientEditor:_Update()
 	self.selection:SetMax(#self.gradient.data)
 	-- colors_sorted = utils.sort_by_value(self.gradient.data, "position")
 
-	local image = self:CreateImage(self:_GetGradient(), self.gradientImage:GetWidth(), self.gradientImage:GetHeight(), "horizontal")
+	local image = self:CreateImage(self:_GetGradient(), self.gradientImage:GetWidth(), self.gradientImage:GetHeight(), 0)
 	self.gradientImage:SetImage(image)
 
 	if #self.gradient.data == 1 then
@@ -84,12 +82,10 @@ function gradientEditor:_Callback()
 	if self.options.callback then
 		local gradient = self:_GetGradient()
 
-		function gradient:CreateImage(width, height, direction)
-			direction = utils.ternary(type(direction) == "string", direction, "horizontal")
-
+		function gradient:CreateImage(width, height, rotate)
 			return graphics.create_image(width, height,
-				graphics.image_functions.multi_gradient, {
-					["direction"] = direction,
+				graphics.image_functions.gradient, {
+					["rotate"] = rotate,
 					["colors"] = self.data,
 					["smoothness"] = self.settings.smoothness,
 				}
@@ -330,8 +326,8 @@ function gradientEditor:_PopulatePresets()
 		local image = self.loveframes.Create("image", self.frame)
 		image.index = index
 		image:SetImage(graphics.create_image(cell_width, cell_width,
-			graphics.image_functions.multi_gradient, {
-				["direction"] = "horizontal",
+			graphics.image_functions.gradient, {
+				["rotate"] = math.pi*(7/4),
 				["colors"] = preset.data,
 				["smoothness"] = preset.settings.smoothness,
 			})

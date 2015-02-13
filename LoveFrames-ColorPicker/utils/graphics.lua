@@ -20,32 +20,54 @@ image_functions.hsv_colorspace = function(x, y, width, height)
 	return color_conversion.hsv2rgb(x/width, 1, 1 - y/height)
 end
 
-image_functions.gradient = function(x, y, width, height, options)
+image_functions._gradient = function(x, y, width, height, options)
 	assert(options.from, "Color table is nil!")
 
-	local from = options.from or false
-	local to = options.to or from
-	local dir = utils.ternary(options.direction == "horizontal", {x, width}, {y, height})
-	to[4] = to[4] or 255
-	from[4] = from[4] or 255
+	local start = options.from or false
+	local ending = options.to or from
+	start[4] = start[4] or 255
+	ending[4] = ending[4] or 255
 
-	local i = 1-dir[1]/dir[2]
-	local r = to[1] + i*(from[1] - to[1])
-	local g = to[2] + i*(from[2] - to[2])
-	local b = to[3] + i*(from[3] - to[3])
-	local a = to[4] + i*(from[4] - to[4])
+	local i = 1-x/width
+	local r = calc.interpolate(i, ending[1], start[1])
+	local g = calc.interpolate(i, ending[2], start[2])
+	local b = calc.interpolate(i, ending[3], start[3])
+	local a = calc.interpolate(i, ending[4], start[4])
 
 	return r, g, b, a
 end
 
-image_functions.multi_gradient = function(x, y, width, height, options)
+image_functions.gradient = function(x, y, width, height, options)
 	assert(options.colors, "Color table is nil!")
 
-	local dir = utils.ternary(options.direction == "horizontal", {x, width}, {y, height})
 	local tbl = utils.sort_by_value(options.colors, "position")
 	local smoothness = utils.ternary(options.smoothness, utils.clamp(1 - options.smoothness, 0, 1), 0)
-
 	smoothness = calc.transition.ease_in(smoothness, 6, 1, 500)
+
+	local theta = options.rotate or 0
+	local pos
+
+	if options.type == "radial" then
+		local center = calc.center_of_line({x=0, y=0}, {x=width, y=height})
+		pos = calc.distance_from_point({x=x, y=y}, center) / calc.magnitude(center.x, center.y)
+	elseif options.type == "reflected" then
+		-- not yet implemented
+	elseif theta ~= 0 or (not options.type or options.type == "linear") then
+		local center = calc.center_of_line({x=0, y=0}, {x=width, y=height})
+		local origin = calc.rotate_point({x=0, y=0}, center, theta)
+		local ending = calc.rotate_point({x=width, y=0}, center, theta)
+		local a = calc.distance_from_point({x=x, y=y}, origin)
+		local b = calc.distance_from_line({x=x, y=y}, origin, ending)
+		pos = math.sqrt(a^2 - b^2) / calc.distance_from_point(origin, ending)
+	else
+		pos = x / width
+	end
+
+	if y < 0 then
+		-- return 0, 255, 0, 255
+	elseif pos > 1 then
+		return unpack(tbl[#tbl].color)
+	end
 
 	if tbl[1]["position"] ~= 0 then
 		table.insert(tbl, 1, {
@@ -56,15 +78,14 @@ image_functions.multi_gradient = function(x, y, width, height, options)
 
 	for index, from in ipairs(tbl) do
 		local to = tbl[index+1] or {}
-		local pos = dir[1]/dir[2]
 
-		if pos <= (to.position or 1) and pos >= from.position then
-			local i = (pos - from.position)*dir[2]
-			local length = ((to.position or 1) - from.position)*dir[2]
+		if pos <= (to.position or 1) and pos >= (from.position or 0) then
+			local i = (pos - from.position)
+			local length = ((to.position or 1) - from.position)
 
 			i = calc.transition.ease_in_out(i / length, smoothness, 0, length)
 
-			return image_functions.gradient(i, i, length, length, {
+			return image_functions._gradient(i, i, length, length, {
 				from = from.color,
 				to  = to.color or from.color,
 				direction = options.direction

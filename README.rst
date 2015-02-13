@@ -44,7 +44,7 @@ Example
 .. code-block:: lua
 
 	function doStuff(color)
-		-- stuff
+		-- do stuff
 	end
 
 	colorPicker({
@@ -100,17 +100,38 @@ Example
 .. code-block:: lua
 
 	function doStuff(gradient)
-		local image = gradient:CreateImage(600, 300, "vertical")
-		-- do something with image
+		local image = gradient:CreateImage(300, 300, math.pi*(7/4))
+		-- do stuff with image
 	end
 
 	local button = loveframes.Create("button")
 	button:SetText("Gradient Editor")
 	button.OnClick = function()
 		gradientEditor({
+			screenLocked = false,
 			callback = doStuff
 		})
 	end
+
+Create your own gradient
+------------------------
+.. code-block:: lua
+
+	local gradient = {
+		settings = {
+				["name"] = "Greyscale",
+				["smoothness"] = 1
+			},
+		data = {{
+				["color"] = {255, 255, 255},
+				["position"] = 0
+			},{
+				["color"] = {0, 0, 0},
+				["position"] = 1
+			}}
+	}
+
+	local image = gradientEditor:CreateImage(gradient, 600, 300, 0)
 
 .. image:: gradientEditor.png
   :alt: Screenshot

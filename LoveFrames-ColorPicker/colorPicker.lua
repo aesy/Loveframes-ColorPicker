@@ -15,7 +15,7 @@ local calc = require(path .. "utils.calc")
 	- @param 'shaders' (optional) boolean. Default: false.
 	- @param 'loveframes' (optional) module. Default: loveframes.
 	-
-	- @returns loveframes self.frame.
+	- @returns loveframes frame.
 --]]---------------------------------------------------------
 colorPicker = {}
 
@@ -73,7 +73,7 @@ function colorPicker:_Update(ignore)
 	for _, v in pairs(update) do
 		if v[1] ~= ignore then
 			if type(v[2]) == "number" then
-				v[2] = calc.round(tonumber(v[2]))
+				v[2] = calc.round(v[2])
 			end
 			v[1]:SetText(v[2])
 		end
