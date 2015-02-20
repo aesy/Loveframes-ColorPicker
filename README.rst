@@ -100,7 +100,7 @@ Example
 .. code-block:: lua
 
 	function doStuff(gradient)
-		local image = gradient:CreateImage(300, 300, math.pi*(7/4))
+		local image = gradient:CreateImage(300, 300, math.pi*(7/4)) -- width, height, rotation
 		-- do stuff with image
 	end
 
@@ -112,6 +112,9 @@ Example
 			callback = doStuff
 		})
 	end
+
+.. image:: gradientEditor.png
+  :alt: Screenshot
 
 Create your own gradient
 ------------------------
@@ -131,10 +134,7 @@ Create your own gradient
 			}}
 	}
 
-	local image = gradientEditor:CreateImage(gradient, 600, 300, 0)
-
-.. image:: gradientEditor.png
-  :alt: Screenshot
+	local image = gradientEditor:CreateImage(gradient, 600, 300, 0) -- gradient object, width, height, rotation (radians)
 
 
 Issues
