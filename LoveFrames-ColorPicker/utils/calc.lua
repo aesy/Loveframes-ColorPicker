@@ -5,17 +5,9 @@ local utils = require(path .. "utils")
 -- Mathematics
 ---------------------------------------------------------
 local function round(n)
+	assert(n, "Required argument missing or nil")
+
 	return math.floor(n + 0.5)
-end
-
-local function sum(...)
-	local s = 0
-
-	for _, x in ipairs({...}) do
-		s = s + x
-	end
-
-	return s
 end
 
 local function magnitude(...)
@@ -29,7 +21,7 @@ local function magnitude(...)
 end
 
 local function translate(point, translation)
-	assert(point and translation, "Required argument missing")
+	assert(point and translation, "Required argument missing or nil")
 
 	for k, v in pairs(translation) do
 		point[k] = point[k] + v
@@ -39,7 +31,7 @@ local function translate(point, translation)
 end
 
 local function rotate_point(point, rot_point, angle)
-	assert(point and rot_point and angle, "Required argument missing")
+	assert(point and rot_point and angle, "Required argument missing or nil")
 
 	point = translate(point, {x=-rot_point.x, y=-rot_point.y})
 
@@ -50,6 +42,8 @@ local function rotate_point(point, rot_point, angle)
 end
 
 local function distance_from_point(a, b)
+	assert(a and b, "Required argument missing or nil")
+
 	local tbl = {}
 
 	for k, x in pairs(a) do
@@ -60,6 +54,8 @@ local function distance_from_point(a, b)
 end
 
 local function distance_from_line(point, l1, l2)
+	assert(point and l1 and l2, "Required argument missing or nil")
+
 	local a = l2.y - l1.y
 	local b = l2.x - l1.x
 	local c = l2.x*l1.y - l2.y*l1.x
@@ -68,6 +64,8 @@ local function distance_from_line(point, l1, l2)
 end
 
 local function center_of_line(a, b)
+	assert(a and b, "Required argument missing or nil")
+
 	local tbl = {}
 	local i = 0
 
@@ -89,7 +87,7 @@ local function center_of_line(a, b)
 end
 
 local function interpolate(i, start, ending)
-	assert(i and start and ending, "Required argument missing")
+	assert(i and start and ending, "Required argument missing or nil")
 
 	return start + i*(ending - start)
 end
@@ -100,7 +98,7 @@ end
 local transition = {}
 
 transition.ease_in = function(x, exp, from, to)
-	assert(x, "Required argument missing")
+	assert(x, "Required argument missing or nil")
 
 	local from = from or 0
 	local to = to or 1
@@ -110,7 +108,7 @@ transition.ease_in = function(x, exp, from, to)
 end
 
 transition.ease_in_out = function(x, exp, from, to)
-	assert(x, "Required argument missing")
+	assert(x, "Required argument missing or nil")
 
 	local from = from or 0
 	local to = to or 1
@@ -126,7 +124,6 @@ return {
 	["transition"] = transition,
 	["magnitude"] = magnitude,
 	["round"] = round,
-	["sum"] = sum,
 	["distance_from_point"] = distance_from_point,
 	["distance_from_line"] = distance_from_line,
 	["center_of_line"] = center_of_line,

@@ -67,7 +67,7 @@ function gradientEditor:_Update()
 	self.selection:SetMax(#self.gradient.data)
 	-- colors_sorted = utils.sort_by_value(self.gradient.data, "position")
 
-	local image = self:CreateImage(self:_GetGradient(), self.gradientImage:GetWidth(), self.gradientImage:GetHeight(), 0)
+	local image = self:CreateImage(self:_GetGradient(), self.gradientImage:GetWidth(), self.gradientImage:GetHeight())
 	self.gradientImage:SetImage(image)
 
 	if #self.gradient.data == 1 then
@@ -182,6 +182,10 @@ function gradientEditor:_CreateEditor(offsetY)
 	self.gradientImage:SetSize(390, 25)
 	self.gradientImage:SetPos(30, 190)
 
+	-- self.gradientImage = self.loveframes.Create("image", self.frame)
+	-- self.gradientImage:SetSize(390, 25)
+	-- self.gradientImage:SetPos(30, 190)
+
 	---------------------------------------------------------
 	-- Edit area
 	---------------------------------------------------------
@@ -231,15 +235,22 @@ function gradientEditor:_CreateEditor(offsetY)
 		self:_Update()
 	end
 
-	self.delete = self.loveframes.Create("button", self.frame)
-	self.delete:SetSize(80, 25)
-	self.delete:SetPos(330, 274)
-	self.delete:SetText("Delete")
-	self.delete.OnClick = function(object)
-		local i = self.selection:GetValue()
-		table.remove(self.gradient.data, i)
-		self:_Update()
-		self.selection.OnValueChanged(self.selection, self.selection:GetValue())
+	self.add_left = self.loveframes.Create("button", self.frame)
+	self.add_left:SetSize(25, 25)
+	self.add_left:SetPos(330, 274)
+	self.add_left:SetText("<<")
+	self.add_left.OnClick = function(object)
+	end
+
+	local text = self.loveframes.Create("text", self.frame)
+	text:SetPos(358, 280)
+	text:SetText("Add")
+
+	self.add_right = self.loveframes.Create("button", self.frame)
+	self.add_right:SetSize(25, 25)
+	self.add_right:SetPos(385, 274)
+	self.add_right:SetText(">>")
+	self.add_right.OnClick = function(object)
 	end
 
 	---------------------------------------------------------
@@ -277,6 +288,17 @@ function gradientEditor:_CreateEditor(offsetY)
 		local i = self.selection:GetValue()
 		self.gradient.data[i]["color"][4] = value*2.55
 		self:_Update()
+	end
+
+	self.delete = self.loveframes.Create("button", self.frame)
+	self.delete:SetSize(80, 25)
+	self.delete:SetPos(330, 309)
+	self.delete:SetText("Delete")
+	self.delete.OnClick = function(object)
+		local i = self.selection:GetValue()
+		table.remove(self.gradient.data, i)
+		self:_Update()
+		self.selection.OnValueChanged(self.selection, self.selection:GetValue())
 	end
 
 end
@@ -327,7 +349,7 @@ function gradientEditor:_PopulatePresets()
 		image.index = index
 		image:SetImage(graphics.create_image(cell_width, cell_width,
 			graphics.image_functions.gradient, {
-				["rotate"] = math.pi*(7/4),
+				["rotate"] = math.pi/4,
 				["colors"] = preset.data,
 				["smoothness"] = preset.settings.smoothness,
 			})

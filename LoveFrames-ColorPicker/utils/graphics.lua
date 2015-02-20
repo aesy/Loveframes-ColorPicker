@@ -41,48 +41,51 @@ image_functions.gradient = function(x, y, width, height, options)
 	assert(options.colors, "Color table is nil!")
 
 	local tbl = utils.sort_by_value(options.colors, "position")
-	local smoothness = utils.ternary(options.smoothness, utils.clamp(1 - options.smoothness, 0, 1), 0)
+	local smoothness = 0
+	if options.smoothness then
+		smoothness = 1 - options.smoothness
+	end
 	smoothness = calc.transition.ease_in(smoothness, 6, 1, 500)
 
 	local theta = options.rotate or 0
+	local scale = options.scale or 1
 	local pos
 
 	if options.type == "radial" then
 		local center = calc.center_of_line({x=0, y=0}, {x=width, y=height})
-		pos = calc.distance_from_point({x=x, y=y}, center) / calc.magnitude(center.x, center.y)
+		pos = calc.distance_from_point({x=x, y=y}, center) / calc.magnitude(center.x, center.y)*math.abs(2 - scale/2)
 	elseif options.type == "reflected" then
-		-- not yet implemented
-	elseif theta ~= 0 or (not options.type or options.type == "linear") then
 		local center = calc.center_of_line({x=0, y=0}, {x=width, y=height})
-		local origin = calc.rotate_point({x=0, y=0}, center, theta)
-		local ending = calc.rotate_point({x=width, y=0}, center, theta)
-		local a = calc.distance_from_point({x=x, y=y}, origin)
-		local b = calc.distance_from_line({x=x, y=y}, origin, ending)
-		pos = math.sqrt(a^2 - b^2) / calc.distance_from_point(origin, ending)
+		local origin = calc.rotate_point({x=0, y=0}, center, theta + math.pi/2)
+		local ending = calc.rotate_point({x=width, y=0}, center, theta + math.pi/2)
+		local line_distance = calc.distance_from_line({x=x, y=y}, origin, ending)*2
+		pos = math.abs(width + line_distance) / width
+
+		if line_distance < -width*2 or line_distance > 0 then
+			return unpack(tbl[#tbl].color)
+		end
+	elseif theta ~= 0 or options.type == "linear" then
+		local center = calc.center_of_line({x=0, y=0}, {x=width, y=height})
+		local origin = calc.rotate_point({x=0, y=0}, center, -theta - math.pi/2)
+		local ending = calc.rotate_point({x=width, y=0}, center, -theta - math.pi/2)
+		local line_distance = calc.distance_from_line({x=x, y=y}, origin, ending)
+		pos = math.abs(line_distance) / calc.magnitude(math.max(width, height), 0)
+
+		if pos > 1 then
+			return unpack(tbl[#tbl].color)
+		elseif line_distance > 0 then
+			return unpack(tbl[1].color)
+		end
 	else
 		pos = x / width
-	end
-
-	if y < 0 then
-		-- return 0, 255, 0, 255
-	elseif pos > 1 then
-		return unpack(tbl[#tbl].color)
-	end
-
-	if tbl[1]["position"] ~= 0 then
-		table.insert(tbl, 1, {
-			color = tbl[1]["color"],
-			position = 0
-		})
 	end
 
 	for index, from in ipairs(tbl) do
 		local to = tbl[index+1] or {}
 
-		if pos <= (to.position or 1) and pos >= (from.position or 0) then
-			local i = (pos - from.position)
+		if pos <= (to.position or 1) and pos >= from.position then
 			local length = ((to.position or 1) - from.position)
-
+			local i = pos - from.position
 			i = calc.transition.ease_in_out(i / length, smoothness, 0, length)
 
 			return image_functions._gradient(i, i, length, length, {
@@ -92,6 +95,7 @@ image_functions.gradient = function(x, y, width, height, options)
 			})
 		end
 	end
+	return unpack(tbl[1].color)
 end
 
 image_functions.relief = function(x, y, width, height, options)

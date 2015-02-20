@@ -2,7 +2,7 @@
 -- Utility functions
 ---------------------------------------------------------
 local function clamp(val, first, second)
-	assert(val and first, "Required argument missing")
+	assert(val and first, "Required argument missing or nil")
 
 	if first and not second then
 		if val > first then
@@ -28,7 +28,7 @@ local function ternary(cond, a, b)
 end
 
 local function deep_copy(t)
-	assert(t, "Required argument missing")
+	assert(t, "Required argument missing or nil")
 
 	local c = {}
 	if type(t) == "table" then
@@ -42,7 +42,7 @@ local function deep_copy(t)
 end
 
 function shallow_copy(t)
-	assert(t, "Required argument missing")
+	assert(t, "Required argument missing or nil")
 
 	local c = {}
 	if type(t) == "table" then
@@ -56,7 +56,7 @@ function shallow_copy(t)
 end
 
 local function sort_by_value(tbl, key)
-	assert(tbl, "Required argument missing")
+	assert(tbl, "Required argument missing or nil")
 
 	table.sort(tbl, function(a, b)
 		if key then
@@ -98,13 +98,13 @@ local function _orderedNext(tbl, state)
 end
 
 local function orderedPairs(tbl)
-	assert(tbl, "Required argument missing")
+	assert(tbl, "Required argument missing or nil")
 
 	return _orderedNext, tbl, nil
 end
 
 local function grid(index, width, height, cell_width, cell_height, padding)
-	assert(index and width and height and cell_width and cell_height, "Required argument missing")
+	assert(index and width and height and cell_width and cell_height, "Required argument missing or nil")
 	assert(index ~= 0, "Index must start at 1 (for Lua consistency)")
 
 	local padding = padding or 0
@@ -169,7 +169,6 @@ return {
 	["shallow_copy"] = shallow_copy,
 	["ordered_pairs"] = orderedPairs,
 	["sort_by_value"] = sort_by_value,
-	["grid"] = grid,
 	["serialize"] = serialize,
 	["ternary"] = ternary,
 }

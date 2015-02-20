@@ -132,9 +132,16 @@ function colorPicker:_CreateColorspace()
 	self.hsv_colorspace.colorImage = graphics.create_image(width, height, graphics.image_functions.hsv_colorspace)
 	self.hsv_colorspace.alphaImage = graphics.create_image(width, height,
 		graphics.image_functions.gradient, {
-			["from"] = {255, 255, 255},
-			["to"] = {0, 0, 0},
-			["direction"] = "vertical",
+			rotate = -math.pi/2,
+			colors = {
+				{
+					["color"] = {255, 255, 255},
+					["position"] = 0
+				},{
+					["color"] = {0, 0, 0},
+					["position"] = 1
+				}
+			}
 		})
 	self.hsv_colorspace.cursor = graphics.create_image(14, 14, graphics.image_functions.cursor_circle, {["size"]=5})
 
@@ -194,9 +201,16 @@ function colorPicker:_CreateColorspace()
 	self.hsv_slider = self.loveframes.Create("image", self.frame)
 	self.hsv_slider:SetImage(graphics.create_image(22, 200,
 		graphics.image_functions.gradient, {
-			["from"] = {255, 255, 255, 255},
-			["to"] = {255, 255, 255, 0},
-			["direction"] = "vertical",
+			rotate = -math.pi/2,
+			colors = {
+				{
+					["color"] = {255, 255, 255, 255},
+					["position"] = 0
+				},{
+					["color"] = {255, 255, 255, 0},
+					["position"] = 1
+				}
+			}
 		}))
 	self.hsv_slider:SetPos(225, 37)
 
